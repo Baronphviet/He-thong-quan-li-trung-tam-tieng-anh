@@ -1,0 +1,37 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: english-center-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: english_center
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  backend:
+    build: ./backend
+    container_name: english-center-backend
+    depends_on:
+      - db
+    environment:
+      DB_URL: jdbc:mysql://db:3306/english_center?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: root
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build: ./frontend
+    container_name: english-center-frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:8080/api
+    ports:
+      - "3000:3000"
+
+volumes:
+  db_data:

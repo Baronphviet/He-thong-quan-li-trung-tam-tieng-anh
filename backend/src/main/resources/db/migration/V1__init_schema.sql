@@ -1,0 +1,2 @@
+-- Initial schema placeholder.
+-- Add CREATE TABLE statements for entities in README.
