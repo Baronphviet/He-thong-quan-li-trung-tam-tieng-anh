@@ -10,7 +10,7 @@
 1. [Tổng quan dự án]
 2. [Chức năng – Use Case]
 3. [Entity (Thực thể)]
-4. [Các gói (Package)
+4. [Các gói (Package)]
 5. [Mối quan hệ giữa các gói – PlantUML]
 6. [Công nghệ sử dụng]
 7. [Cấu trúc thư mục]
