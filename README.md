@@ -926,3 +926,178 @@ npm run dev
 ---
 
 _README được tổng hợp từ đề tài "Xây dựng website quản lý trung tâm tiếng Anh" – Môn Lập trình Web_
+
+---
+
+## 🚀 Quy Trình Phát Triển Chi Tiết (Build -> Test -> Deploy)
+
+> Trạng thái hiện tại của repo: đã có khung backend/frontend + migration DB, chưa hoàn thiện module nghiệp vụ và chưa có bộ test tự động.
+
+### 1) Chuẩn bị môi trường phát triển
+
+1. Cài công cụ:
+   - Java 17+
+   - Maven 3.9+
+   - Node.js 20 LTS + npm
+   - Docker Desktop + Docker Compose
+   - MySQL 8 (nếu không dùng Docker DB)
+2. Clone repo và vào thư mục dự án:
+   ```bash
+   git clone https://github.com/Baronphviet/He-thong-quan-li-trung-tam-tieng-anh.git
+   cd He-thong-quan-li-trung-tam-tieng-anh
+   ```
+3. Tạo branch làm việc:
+   ```bash
+   git checkout -b feature/<ten-chuc-nang>
+   ```
+
+### 2) Chạy local (ưu tiên Docker)
+
+1. Chạy toàn bộ hệ thống:
+   ```bash
+   docker compose up --build
+   ```
+2. Truy cập:
+   - Frontend: `http://localhost:3000`
+   - Backend: `http://localhost:8080`
+3. Kiểm tra nhanh:
+   - Backend container lên thành công
+   - Flyway chạy migration `V1__init_schema.sql`
+   - Frontend load được trang chính
+
+> Nếu chạy thủ công:
+> - Backend: `cd backend && mvn spring-boot:run`
+> - Frontend: `cd frontend && npm install && npm run dev`
+
+### 3) Quy tắc triển khai chức năng (theo từng module)
+
+Mỗi module nên làm theo thứ tự:
+1. DB migration (nếu cần) trong `backend/src/main/resources/db/migration`
+2. Entity + Repository
+3. Service (business logic)
+4. DTO + Validation
+5. Controller (REST API)
+6. Exception handling
+7. Frontend service gọi API
+8. Frontend page/component
+
+Áp dụng theo nhóm use case:
+- Nhóm 1: Auth, User/Role
+- Nhóm 2: Class, Student, Teacher, Parent
+- Nhóm 3: Attendance, Fee, Payment
+- Nhóm 4: Statistics, Announcement, Notification
+
+### 4) Build
+
+1. Backend:
+   ```bash
+   cd backend
+   mvn clean package
+   ```
+   Artifact: `backend/target/backend-0.0.1-SNAPSHOT.jar`
+
+2. Frontend:
+   ```bash
+   cd frontend
+   npm install
+   npm run build
+   ```
+   Artifact: `frontend/dist/`
+
+3. Docker images:
+   ```bash
+   docker compose build
+   ```
+
+### 5) Test (quy chuẩn trước khi merge)
+
+Hiện repo chưa có test case; cần bổ sung theo tối thiểu sau:
+
+1. Backend unit test (Service):
+   - AuthService
+   - FeeCalculationService
+   - StatisticsService
+
+2. Backend integration test (Controller + DB):
+   - Đăng nhập
+   - CRUD lớp học
+   - Điểm danh
+   - Ghi nhận thanh toán
+
+3. Frontend test:
+   - Render route chính
+   - API service layer
+   - E2E flow đăng nhập -> dashboard
+
+Lệnh đề xuất:
+```bash
+# backend
+cd backend
+mvn test
+
+# frontend (sau khi thêm test framework)
+cd frontend
+npm test
+```
+
+### 6) CI/CD đề xuất (GitHub Actions)
+
+1. Trigger:
+   - Pull Request vào `main`: chạy CI (build + test)
+   - Push/merge `main`: build image + deploy
+
+2. CI pipeline:
+   - Setup JDK 17 và Node 20
+   - `mvn -B test package`
+   - `npm ci && npm run build` (và `npm test` khi đã có test)
+
+3. CD pipeline:
+   - Build + push Docker images
+   - SSH vào server chạy `docker compose pull && docker compose up -d`
+   - Chạy smoke test sau deploy
+
+### 7) Deploy môi trường staging/production
+
+1. Chuẩn bị server:
+   - Linux VM (Ubuntu 22.04+)
+   - Docker + Docker Compose
+   - Reverse proxy Nginx (HTTPS)
+
+2. Biến môi trường production cần có:
+   - `DB_URL`
+   - `DB_USERNAME`
+   - `DB_PASSWORD`
+   - `JWT_SECRET` (khi tích hợp auth JWT)
+   - Các token tích hợp thông báo (nếu bật)
+
+3. Quy trình deploy:
+   ```bash
+   docker compose pull
+   docker compose up -d
+   docker compose ps
+   ```
+
+4. Checklist sau deploy:
+   - API phản hồi 200 ở endpoint health
+   - Frontend gọi được API
+   - Không có lỗi Flyway/JPA trong log
+
+### 8) Quy trình release và rollback
+
+1. Release:
+   - Tag version: `v0.1.0`, `v0.2.0`, ...
+   - Ghi changelog ngắn cho mỗi bản phát hành
+
+2. Rollback khi lỗi:
+   - Quay về image/tag trước
+   - `docker compose up -d` lại theo tag cũ
+   - Kiểm tra DB migration có tương thích rollback hay không
+
+### 9) Definition of Done (DoD)
+
+Một chức năng chỉ được xem là hoàn thành khi:
+1. Có migration + API + UI
+2. Chạy local qua Docker thành công
+3. Có test cho logic chính
+4. Qua CI không lỗi
+5. Được review và merge PR
