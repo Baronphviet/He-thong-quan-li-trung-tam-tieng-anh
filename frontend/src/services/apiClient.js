@@ -20,3 +20,27 @@ export async function apiFetch(path, options = {}) {
 
   return response.json();
 }
+
+export function apiGet(path) {
+  return apiFetch(path);
+}
+
+export function apiPost(path, body) {
+  return apiFetch(path, {
+    method: "POST",
+    body: JSON.stringify(body)
+  });
+}
+
+export function apiPut(path, body) {
+  return apiFetch(path, {
+    method: "PUT",
+    body: JSON.stringify(body)
+  });
+}
+
+export function apiDelete(path) {
+  return apiFetch(path, {
+    method: "DELETE"
+  });
+}

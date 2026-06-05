@@ -1,17 +1,22 @@
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import AppRouter from "./router";
 
 export default function App() {
   return (
-    <div style={{ fontFamily: "Arial, sans-serif", padding: "24px" }}>
-      <h1>English Center Management</h1>
-      <nav style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
-        <Link to="/">Home</Link>
-        <Link to="/admin">Admin</Link>
-        <Link to="/teacher">Teacher</Link>
-        <Link to="/student">Student</Link>
-        <Link to="/parent">Parent</Link>
-      </nav>
+    <div className="app-shell">
+      <header className="topbar">
+        <NavLink to="/" className="brand-mark">
+          <span className="brand-logo">EC</span>
+          <span>English Center Ops</span>
+        </NavLink>
+        <nav className="nav-links">
+          <NavLink to="/">Home</NavLink>
+          <NavLink to="/admin">Admin</NavLink>
+          <NavLink to="/teacher">Teacher</NavLink>
+          <NavLink to="/student">Student</NavLink>
+          <NavLink to="/parent">Parent</NavLink>
+        </nav>
+      </header>
       <AppRouter />
     </div>
   );
