@@ -1,72 +1,154 @@
-# English Center — Minimal runnable setup
+﻿# Hệ Thống Quản Lý Trung Tâm Tiếng Anh
 
-This repository contains a Spring Boot backend and a React + Vite frontend for a minimal English center management MVP. The goal of this update is to make it easy to run locally (H2 in-memory) and to run the full stack via Docker Compose with sensible defaults.
+Hệ thống quản lý toàn diện dành cho các trung tâm dạy tiếng Anh, bao gồm quản lý học sinh, giáo viên, lớp học, tài chính, công bố thông báo, và đăng ký học.
 
-## What I changed
-- Fixed container networking for the frontend in `docker-compose.yml` so it reaches the backend service when run under Docker Compose.
-- Rewrote this README with clear local and Docker run instructions and a short changelog.
+## 📋 Các Chức Năng Chính
 
-No behavioral changes were made to the application code. The backend still defaults to an in-memory H2 database when no external DB is provided; the original MySQL + Flyway setup is preserved for Docker runs.
+### 1. Quản Lý Tài Khoản & Xác Thực
+- Đăng nhập/Đăng xuất
+- Quản lý tài khoản người dùng (Admin, Giáo viên, Học sinh, Phụ huynh)
+- Phân quyền theo role
 
-## Quick start — Local (developer)
-Prerequisites: Java 17 + Maven, Node.js (18+) and npm or yarn.
+### 2. Dashboard Theo Role
+- **Admin Dashboard**: Quản lý toàn bộ hệ thống
+- **Teacher Dashboard**: Quản lý lớp học và học sinh
+- **Student Dashboard**: Xem lớp học và thông tin cá nhân
+- **Parent Dashboard**: Theo dõi tiến độ của con em
 
-1) Backend (H2 in-memory):
+### 3. Quản Lý Lớp Học
+- Tạo, chỉnh sửa, xóa lớp học
+- Gán giáo viên cho lớp
+- Xem danh sách học sinh
 
-```bash
-cd backend
-mvn -DskipTests package
-java -jar target/backend-0.0.1-SNAPSHOT.jar
-```
+### 4. Quản Lý Đăng Ký Học
+- Đăng ký vào lớp
+- Quản lý trạng thái đăng ký
+- Theo dõi lịch sử
 
-The backend starts on port 8080 and exposes APIs under `/api`.
+### 5. Quản Lý Tài Chính
+- Theo dõi khoản thu (học phí, phí khác)
+- Theo dõi khoản chi
+- Báo cáo tài chính
 
-2) Frontend (Vite dev server):
+### 6. Công Bố Thông Báo
+- Tạo và quản lý thông báo
+- Gửi tới học sinh, phụ huynh, giáo viên
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+### 7. Dữ Liệu Chính
+- Quản lý danh sách khoá học, trình độ, lớp
 
-Open the frontend at the URL printed by Vite (default `http://localhost:5173`) — the frontend uses `VITE_API_URL` to locate the backend (default `http://localhost:8080/api`).
+---
 
-Tip: to override the API URL in your shell before running the dev server:
+## 🏗️ Kiến Trúc Dự Án
 
-```bash
-export VITE_API_URL=http://localhost:8080/api      # macOS / Linux
-set VITE_API_URL=http://localhost:8080/api         # Windows PowerShell
-```
+### Backend (Java Spring Boot)
+- **Spring Boot 3.3.5** - Framework REST API
+- **Spring Data JPA** - ORM
+- **MySQL 8.0** - Database (Docker), H2 (Local Development)
+- **Flyway** - Database migrations
+- **Java 17** - Language
 
-## Quick start — Docker Compose
-The repository includes a `docker-compose.yml` that brings up a MySQL database, the backend, and the frontend.
+**Dependencies chính:**
+\\\
+spring-boot-starter-web       → REST API endpoints
+spring-boot-starter-data-jpa  → Database ORM
+spring-boot-starter-validation → Input validation
+flyway-core, flyway-mysql     → Auto database migrations
+mysql-connector-j             → MySQL driver
+h2database                    → H2 in-memory (local dev)
+spring-boot-starter-test      → Unit testing
+\\\
 
-Run the full stack (build images the first time):
+### Frontend (React + Vite)
+- **React 18.3.1** - UI library
+- **React Router 6.28.1** - Client-side routing
+- **Vite 5.4.9** - Build tool & dev server
+- **Node.js 20** - Runtime
 
-```bash
+**Dependencies chính:**
+\\\
+react                  → UI component library
+react-dom              → React DOM rendering
+react-router-dom       → Page routing
+vite                   → Fast build tool
+@vitejs/plugin-react   → React support for Vite
+\\\
+
+### Database
+- **MySQL 8.0** - Production database (Docker)
+- **H2** - Local development in-memory database
+
+---
+
+## 🚀 Cách Chạy Dự Án
+
+### ✅ Yêu Cầu Tiên Quyết
+- **Docker & Docker Compose** (Khuyến nghị - Đơn giản nhất)
+
+---
+
+## 🐳 Cách 1: Chạy với Docker Compose (Khuyến Nghị)
+
+### Bước 1: Khởi động toàn bộ stack
+\\\ash
 docker compose up --build
-```
+\\\
 
-Notes:
-- Frontend service runs the Vite dev server on container port `3000` and is mapped to host `3000`.
-- Backend runs on port `8080` and connects to the `db` service.
-- The frontend now uses `http://backend:8080/api` inside the Docker network (this was corrected).
+### Bước 2: Truy cập ứng dụng
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8080/api
 
-If you want Flyway to run migrations in Docker, enable it by setting `FLYWAY_ENABLED=true` in the backend service environment (or create a `docker-compose.override.yml`).
+### Bước 3: Dừng ứng dụng
+\\\ash
+docker compose down
+\\\
 
-## Environment variables
-- `DB_URL` — JDBC URL for the DB (default: H2 in-memory if not provided)
-- `DB_USERNAME`, `DB_PASSWORD` — DB credentials
-- `FLYWAY_ENABLED` — `true`/`false` to enable Flyway migrations (disabled by default)
-- `VITE_API_URL` — frontend API base URL (dev server). When using Docker Compose the frontend container reads `http://backend:8080/api`.
+---
 
-## Files I modified
-- `docker-compose.yml` — fixed `VITE_API_URL` for the frontend container (use the backend service hostname inside Docker network).
-- `README.md` — replaced with this clearer run guide and changelog.
+## ✅ Cách Kiểm Test
 
-## Next suggestions (optional)
-- Add `docker-compose.override.yml` to toggle Flyway (`FLYWAY_ENABLED=true`) for compose runs.
-- Add `application-dev.yml` and `application-prod.yml` Spring profiles to separate local H2 settings from production MySQL.
-- Add a simple `Makefile` or scripts to streamline common tasks (build, run, compose-up).
+### 1. Test Backend APIs
+\\\ash
+curl http://localhost:8080/api/health
+curl http://localhost:8080/api/users
+curl http://localhost:8080/api/classes
+\\\
 
-If you'd like, I can apply any of the suggestions above (example: add `docker-compose.override.yml` to enable Flyway). Reply with which one you prefer and I will implement it.
+### 2. Test Frontend
+Mở browser: **http://localhost:3000**
+
+### 3. Xem Logs
+\\\ash
+docker compose logs -f backend
+docker compose logs -f frontend
+\\\
+
+---
+
+## 📁 API Endpoints Chính
+
+### Users
+- \GET /api/users\ - Danh sách
+- \POST /api/users\ - Tạo mới
+- \GET /api/users/{id}\ - Chi tiết
+- \PUT /api/users/{id}\ - Cập nhật
+- \DELETE /api/users/{id}\ - Xóa
+
+### Classes
+- \GET /api/classes\ - Danh sách
+- \POST /api/classes\ - Tạo mới
+
+### Enrollments
+- \GET /api/enrollments\ - Danh sách
+- \POST /api/enrollments\ - Đăng ký
+
+### Finance
+- \GET /api/finance\ - Danh sách
+
+### Announcements
+- \GET /api/announcements\ - Danh sách
+- \POST /api/announcements\ - Tạo mới
+
+---
+
+**Cập nhật lần cuối:** 07/06/2026

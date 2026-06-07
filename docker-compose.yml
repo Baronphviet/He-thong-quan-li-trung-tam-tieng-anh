@@ -1,3 +1,5 @@
+﻿version: '3.8'
+
 services:
   db:
     image: mysql:8.0
@@ -37,10 +39,10 @@ services:
     depends_on:
       - backend
     environment:
-      # When running via docker-compose the frontend must reach the backend via the service hostname
       VITE_API_URL: http://backend:8080/api
     ports:
       - "3000:3000"
 
 volumes:
   db_data:
+    driver: local
