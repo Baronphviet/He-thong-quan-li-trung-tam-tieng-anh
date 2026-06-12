@@ -62,13 +62,6 @@ export default function HomePage() {
         <h2>Banner trượt</h2>
         <BannerSlider items={sliderItems} />
       </section>
-
-      <section className="section grid four">
-        <Metric label="Học sinh đang học" value={summary?.activeStudents ?? "-"} />
-        <Metric label="Lớp đang mở" value={summary?.openClasses ?? "-"} />
-        <Metric label="Thực thu tháng" value={summary ? formatMoney(summary.monthCollected) : "-"} />
-        <Metric label="Công nợ tháng" value={summary ? formatMoney(summary.monthOutstanding) : "-"} />
-      </section>
     </main>
   );
 }

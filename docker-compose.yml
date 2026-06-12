@@ -44,7 +44,10 @@ services:
       VITE_PROXY_TARGET: http://backend:8080
     ports:
       - "3000:3000"
-
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
 volumes:
   db_data:
     driver: local
+  
