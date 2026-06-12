@@ -1,66 +1,108 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiGet } from "../services/apiClient";
+import { useAuth } from "../store";
 import { formatMoney } from "../utils/format";
+import { sameId } from "../utils/auth";
+import { getApiErrorMessage } from "../utils/apiError";
+import { Link } from "react-router-dom";
+import { Alert, Button, Loading } from "../components/common";
 
 export default function TeacherDashboardPage() {
+  const { role, userId } = useAuth();
   const [classes, setClasses] = useState([]);
   const [studentsByClass, setStudentsByClass] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([
-      apiGet("/classes"),
-      apiGet("/reports/students-by-class")
-    ])
-      .then(([classData, studentData]) => {
-        setClasses(classData);
-        setStudentsByClass(studentData);
-      })
-      .catch((err) => setError(err.message));
-  }, []);
+    let active = true;
+
+    async function loadTeacherData() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const [classData, studentData] = await Promise.all([
+          apiGet("/classes"),
+          apiGet("/reports/students-by-class")
+        ]);
+
+        if (!active) return;
+
+        const allClasses = Array.isArray(classData) ? classData : [];
+        const allStudents = Array.isArray(studentData) ? studentData : [];
+        const visibleClasses = role === "TEACHER"
+          ? allClasses.filter((item) => sameId(item.teacherId, userId))
+          : allClasses;
+        const visibleClassIds = new Set(visibleClasses.map((item) => item.id));
+
+        setClasses(visibleClasses);
+        setStudentsByClass(allStudents.filter((item) => visibleClassIds.has(item.classId)));
+      } catch (err) {
+        if (active) {
+          setError(getApiErrorMessage(err));
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadTeacherData();
+    return () => {
+      active = false;
+    };
+  }, [role, userId]);
 
   const classStats = useMemo(() => {
     return classes.map((item) => ({
       ...item,
-      students: studentsByClass.filter((student) => student.classId === item.id)
+      students: studentsByClass.filter((student) => sameId(student.classId, item.id))
     }));
   }, [classes, studentsByClass]);
+
+  if (loading) return <Loading />;
 
   return (
     <main>
       <section className="hero">
-        <p className="eyebrow">Teacher workspace</p>
-        <h1>Lich day va danh sach hoc sinh theo lop.</h1>
+        <p className="eyebrow">Không gian giáo viên</p>
+        <h1>Lịch dạy và danh sách học sinh theo lớp</h1>
         <p className="lead">
-          Trang giao vien doc du lieu class va view hoc sinh theo lop. Phan diem danh co
-          schema san sang de mo rong thanh form buoi hoc.
+          Giáo viên xem lớp được phân công, lịch học và thực hiện điểm danh từng buổi.
         </p>
+        <Link to="/teacher/attendance"><Button type="button">Mở trang điểm danh</Button></Link>
       </section>
 
-      {error && <p className="message error">{error}</p>}
+      {error && <Alert type="error" title="Lỗi tải dữ liệu">{error}</Alert>}
 
       <section className="section grid three">
+        {classStats.length === 0 && <p className="muted">Chưa có lớp được phân công.</p>}
         {classStats.map((item) => (
           <article className="panel" key={item.id}>
             <p className="eyebrow">{item.status}</p>
             <h2>{item.className}</h2>
             <p className="lead">
               {item.schedule}<br />
-              GV: {item.teacherName || "Chua gan"}<br />
-              Hoc phi: {formatMoney(item.tuitionFee)}
+              GV: {item.teacherName || "Chưa gán"}<br />
+              Học phí: {formatMoney(item.tuitionFee)}
             </p>
-            <p><span className="status-pill">{item.students.length} hoc sinh</span></p>
+            <p><span className="status-pill">{item.students.length} học sinh</span></p>
           </article>
         ))}
       </section>
 
       <section className="section table-card">
-        <p className="eyebrow">Attendance source</p>
-        <h2>Danh sach hoc sinh dang hoc</h2>
+        <p className="eyebrow">Danh sách lớp</p>
+        <h2>Học sinh đang học</h2>
         <div className="table-scroll">
           <table>
-            <thead><tr><th>Lop</th><th>Hoc sinh</th><th>Dien thoai</th><th>Giam gia</th><th>Status</th></tr></thead>
+            <thead><tr><th>Lớp</th><th>Học sinh</th><th>Điện thoại</th><th>Giảm giá</th><th>Trạng thái</th></tr></thead>
             <tbody>
+              {studentsByClass.length === 0 && (
+                <tr><td colSpan={5} className="muted">Chưa có học sinh trong lớp được phân công.</td></tr>
+              )}
               {studentsByClass.map((student) => (
                 <tr key={student.enrollmentId}>
                   <td>{student.className}</td>

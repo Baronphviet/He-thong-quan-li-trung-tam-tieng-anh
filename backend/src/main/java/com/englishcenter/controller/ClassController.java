@@ -29,6 +29,11 @@ public class ClassController {
         return service.listClasses();
     }
 
+    @GetMapping("/open")
+    public List<Map<String, Object>> listOpen() {
+        return service.listOpenClasses();
+    }
+
     @GetMapping("/{id}")
     public Map<String, Object> get(@PathVariable Long id) {
         return service.getClass(id);

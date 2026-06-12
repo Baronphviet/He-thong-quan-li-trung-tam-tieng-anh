@@ -34,6 +34,11 @@ public class AnnouncementController {
         return service.listActive();
     }
 
+    @GetMapping("/public/announcements/slider")
+    public List<Announcement> listSlider() {
+        return service.listSlider();
+    }
+
     @PostMapping("/announcements")
     public Announcement create(@RequestBody AnnouncementRequest request) {
         return service.save(null, request);

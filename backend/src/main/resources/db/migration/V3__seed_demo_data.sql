@@ -1,7 +1,7 @@
 -- Demo data for local development and frontend smoke testing.
 
 INSERT INTO users (user_id, username, password_hash, full_name, email, phone, role, is_active) VALUES
-    (1, 'admin', 'admin123', 'Center Admin', 'admin@english.local', '0900000001', 'ADMIN', TRUE),
+    (1, 'admin', 'admin', 'Center Admin', 'admin@english.local', '0900000001', 'ADMIN', TRUE),
     (2, 'teacher.mai', 'teacher123', 'Mai Nguyen', 'mai@english.local', '0900000002', 'TEACHER', TRUE),
     (3, 'teacher.nam', 'teacher123', 'Nam Tran', 'nam@english.local', '0900000003', 'TEACHER', TRUE),
     (4, 'student.an', 'student123', 'An Pham', 'an@english.local', '0900000004', 'STUDENT', TRUE),
@@ -53,7 +53,7 @@ INSERT INTO teacher_salary (salary_id, teacher_id, month, year, total_sessions, 
     (2, 3, 6, 2026, 8, 15000000.00, NULL, 'PENDING', 'June payroll draft');
 
 INSERT INTO announcement (announcement_id, title, content, image_url, type, start_date, end_date, is_active, created_by) VALUES
-    (1, 'Summer English enrollment is open', 'New evening classes for primary students start this month.', 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b', 'BANNER', '2026-06-01', '2026-07-31', TRUE, 1),
+    (1, 'Khai giảng lớp tiếng Anh hè', 'Đăng ký lớp tối cho học sinh tiểu học ngay trong tháng này.', 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b', 'SLIDER', '2026-06-01', '2026-07-31', TRUE, 1),
     (2, 'Parent payment reminder', 'Tuition can be paid by cash or bank transfer with the student code in transfer content.', NULL, 'POPUP', '2026-06-01', '2026-06-30', TRUE, 1);
 
 INSERT INTO system_config (config_key, config_value) VALUES

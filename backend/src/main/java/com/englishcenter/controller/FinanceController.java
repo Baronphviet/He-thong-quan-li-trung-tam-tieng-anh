@@ -51,6 +51,16 @@ public class FinanceController {
         return service.financeMonthlyReport();
     }
 
+    @GetMapping("/reports/statistics")
+    public Map<String, Object> statistics() {
+        return service.statisticsReport();
+    }
+
+    @GetMapping("/reports/finance-profit")
+    public List<Map<String, Object>> financeProfit() {
+        return service.financeMonthlyWithProfit();
+    }
+
     @GetMapping("/reports/student-change")
     public List<?> studentChange() {
         return service.studentChangeReport();

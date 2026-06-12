@@ -1,24 +1,76 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+import { parseApiErrorPayload } from "../utils/apiError";
 
-export async function apiFetch(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    },
-    ...options
-  });
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+export const AUTH_STORAGE_KEY = "english-center-auth";
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `Request failed: ${response.status}`);
-  }
+function joinUrl(baseUrl, path) {
+  const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return `${cleanBase}${cleanPath}`;
+}
 
-  if (response.status === 204) {
+export function getStoredAuth() {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
     return null;
   }
+}
 
-  return response.json();
+function getStoredToken() {
+  return getStoredAuth()?.token || null;
+}
+
+function clearStoredAuth() {
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+}
+
+async function readResponse(response) {
+  const contentType = response.headers.get("content-type") || "";
+  if (response.status === 204) return null;
+  if (contentType.includes("application/json")) {
+    try {
+      return await response.json();
+    } catch {
+      return null;
+    }
+  }
+  const text = await response.text();
+  return text || null;
+}
+
+export async function apiFetch(path, options = {}) {
+  const token = getStoredToken();
+  let response;
+
+  try {
+    response = await fetch(joinUrl(API_BASE_URL, path), {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers || {})
+      }
+    });
+  } catch {
+    throw new Error("Không kết nối được backend. Hãy kiểm tra server hoặc mạng.");
+  }
+
+  const payload = await readResponse(response);
+
+  if (!response.ok) {
+    if (response.status === 401 && token) {
+      clearStoredAuth();
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.assign("/login");
+      }
+    }
+    throw new Error(parseApiErrorPayload(payload, response.status));
+  }
+
+  return payload;
 }
 
 export function apiGet(path) {

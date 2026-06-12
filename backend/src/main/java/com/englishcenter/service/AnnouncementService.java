@@ -39,6 +39,13 @@ public class AnnouncementService {
         return announcements.findActiveForDate(LocalDate.now());
     }
 
+    public List<Announcement> listSlider() {
+        return announcements.findActiveForDate(LocalDate.now()).stream()
+                .filter(item -> item.imageUrl != null && !item.imageUrl.isBlank())
+                .filter(item -> "SLIDER".equalsIgnoreCase(item.type) || "BANNER".equalsIgnoreCase(item.type))
+                .toList();
+    }
+
     @Transactional
     public Announcement save(Long id, AnnouncementRequest request) {
         Announcement announcement = id == null ? new Announcement() : announcements.findById(id)

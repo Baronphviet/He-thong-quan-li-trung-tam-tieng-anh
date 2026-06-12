@@ -1,6 +1,8 @@
 package com.englishcenter.controller;
 
 import com.englishcenter.service.UserManagementService;
+import com.englishcenter.service.UserManagementService.AdminRequest;
+import com.englishcenter.service.UserManagementService.ChangePasswordRequest;
 import com.englishcenter.service.UserManagementService.LinkParentRequest;
 import com.englishcenter.service.UserManagementService.ParentRequest;
 import com.englishcenter.service.UserManagementService.StudentRequest;
@@ -25,6 +27,21 @@ public class UserController {
 
     public UserController(UserManagementService service) {
         this.service = service;
+    }
+
+    @GetMapping("/admins")
+    public List<Map<String, Object>> admins() {
+        return service.listAdmins();
+    }
+
+    @PostMapping("/admins")
+    public Map<String, Object> createAdmin(@RequestBody AdminRequest request) {
+        return service.createAdmin(request);
+    }
+
+    @PutMapping("/admins/{id}")
+    public Map<String, Object> updateAdmin(@PathVariable Long id, @RequestBody AdminRequest request) {
+        return service.updateAdmin(id, request);
     }
 
     @GetMapping("/teachers")
@@ -76,6 +93,16 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void linkParent(@RequestBody LinkParentRequest request) {
         service.linkParent(request);
+    }
+
+    @GetMapping("/users/{id}/profile")
+    public Map<String, Object> profile(@PathVariable Long id) {
+        return service.getProfile(id);
+    }
+
+    @PutMapping("/users/{id}/password")
+    public Map<String, Object> changePassword(@PathVariable Long id, @RequestBody ChangePasswordRequest request) {
+        return service.changePassword(id, request);
     }
 
     @DeleteMapping("/users/{id}")

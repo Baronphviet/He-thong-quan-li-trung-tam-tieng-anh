@@ -1,73 +1,73 @@
 import { useEffect, useState } from "react";
-import { apiGet } from "../services/apiClient";
+import { announcementService, dashboardService } from "../services";
 import { formatMoney } from "../utils/format";
+import { getApiErrorMessage } from "../utils/apiError";
+import { Alert, BannerSlider, Loading } from "../components/common";
 
 export default function HomePage() {
   const [summary, setSummary] = useState(null);
-  const [announcements, setAnnouncements] = useState([]);
+  const [sliderItems, setSliderItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([
-      apiGet("/dashboard/summary"),
-      apiGet("/public/announcements")
-    ])
-      .then(([summaryData, announcementData]) => {
-        setSummary(summaryData);
-        setAnnouncements(announcementData);
-      })
-      .catch((err) => setError(err.message));
+    let active = true;
+
+    async function loadHomeData() {
+      setLoading(true);
+      setError("");
+
+      const [summaryResult, sliderResult] = await Promise.allSettled([
+        dashboardService.getSummary(),
+        announcementService.getSlider()
+      ]);
+
+      if (!active) return;
+
+      if (summaryResult.status === "fulfilled") {
+        setSummary(summaryResult.value);
+      } else {
+        setError(getApiErrorMessage(summaryResult.reason, "Không tải được tổng quan hệ thống."));
+      }
+
+      if (sliderResult.status === "fulfilled") {
+        setSliderItems(Array.isArray(sliderResult.value) ? sliderResult.value : []);
+      }
+
+      setLoading(false);
+    }
+
+    loadHomeData();
+    return () => {
+      active = false;
+    };
   }, []);
+
+  if (loading) return <Loading />;
 
   return (
     <main>
       <section className="hero">
-        <p className="eyebrow">Master Design MVP</p>
-        <h1>Quan ly trung tam tieng Anh bang mot luong du lieu thong nhat.</h1>
+        <p className="eyebrow">Trung tâm Tiếng Anh</p>
+        <h1>Quản lý trung tâm tiếng Anh bằng một luồng dữ liệu thống nhất.</h1>
         <p className="lead">
-          Website nay ket noi truc tiep backend Spring Boot: lop hoc, hoc sinh, phu huynh,
-          hoc phi, thanh toan va view thong ke deu chay tren database that.
+          Hệ thống kết nối lớp học, học sinh, phụ huynh, học phí, thanh toán và báo cáo trên cùng một nền tảng.
         </p>
       </section>
 
-      {error && <p className="message error">Backend chua san sang: {error}</p>}
+      {error && <Alert type="warning" title="Backend chưa sẵn sàng">{error}</Alert>}
 
-      <section className="section grid four">
-        <Metric label="Hoc sinh active" value={summary?.activeStudents ?? "-"} />
-        <Metric label="Lop dang mo" value={summary?.openClasses ?? "-"} />
-        <Metric label="Thuc thu thang" value={summary ? formatMoney(summary.monthCollected) : "-"} />
-        <Metric label="Cong no thang" value={summary ? formatMoney(summary.monthOutstanding) : "-"} />
+      <section className="section">
+        <p className="eyebrow">Quảng cáo & thông báo</p>
+        <h2>Banner trượt</h2>
+        <BannerSlider items={sliderItems} />
       </section>
 
-      <section className="section grid two">
-        <div className="panel">
-          <p className="eyebrow">Kien truc</p>
-          <h2>JPA Service first, SQL View for reports.</h2>
-          <p className="lead">
-            CRUD va cac luong nghiep vu nhu tao enrollment, sinh monthly fee, cap nhat
-            status thanh toan duoc xu ly trong service layer. Database chi giu bang va
-            view bao cao phuc tap.
-          </p>
-        </div>
-
-        <div className="panel">
-          <div className="toolbar">
-            <div>
-              <p className="eyebrow">Thong bao hien hanh</p>
-              <h2>Banner & popup</h2>
-            </div>
-          </div>
-          <div className="banner-list">
-            {announcements.length === 0 && <p className="muted">Chua co thong bao active.</p>}
-            {announcements.map((item) => (
-              <article className="banner-card" key={item.id}>
-                <strong>{item.title}</strong>
-                <span className="muted">{item.content}</span>
-                <span className="status-pill">{item.type}</span>
-              </article>
-            ))}
-          </div>
-        </div>
+      <section className="section grid four">
+        <Metric label="Học sinh đang học" value={summary?.activeStudents ?? "-"} />
+        <Metric label="Lớp đang mở" value={summary?.openClasses ?? "-"} />
+        <Metric label="Thực thu tháng" value={summary ? formatMoney(summary.monthCollected) : "-"} />
+        <Metric label="Công nợ tháng" value={summary ? formatMoney(summary.monthOutstanding) : "-"} />
       </section>
     </main>
   );

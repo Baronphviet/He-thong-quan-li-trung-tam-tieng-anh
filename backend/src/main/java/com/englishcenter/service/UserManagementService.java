@@ -85,6 +85,23 @@ public class UserManagementService {
     public record LinkParentRequest(Long studentId, Long parentId) {
     }
 
+    public record AdminRequest(
+            String username,
+            String password,
+            String fullName,
+            String email,
+            String phone,
+            Boolean active
+    ) {
+    }
+
+    public record ChangePasswordRequest(String password) {
+    }
+
+    public List<Map<String, Object>> listAdmins() {
+        return users.findByRoleOrderByFullNameAsc("ADMIN").stream().map(this::baseMap).toList();
+    }
+
     public List<Map<String, Object>> listTeachers() {
         return users.findByRoleOrderByFullNameAsc("TEACHER").stream().map(this::teacherMap).toList();
     }
@@ -95,6 +112,29 @@ public class UserManagementService {
 
     public List<Map<String, Object>> listParents() {
         return users.findByRoleOrderByFullNameAsc("PARENT").stream().map(this::parentMap).toList();
+    }
+
+    public Map<String, Object> getProfile(Long id) {
+        UserAccount user = users.findById(id).orElseThrow(() -> new NotFoundException("User not found: " + id));
+        return switch (user.role) {
+            case "TEACHER" -> withoutPassword(teacherMap(user));
+            case "STUDENT" -> withoutPassword(studentMap(user));
+            case "PARENT" -> withoutPassword(parentMap(user));
+            default -> withoutPassword(baseMap(user));
+        };
+    }
+
+    @Transactional
+    public Map<String, Object> createAdmin(AdminRequest request) {
+        UserAccount user = createBaseUser(request.username(), request.password(), request.fullName(), request.email(), request.phone(), "ADMIN", request.active());
+        return baseMap(user);
+    }
+
+    @Transactional
+    public Map<String, Object> updateAdmin(Long id, AdminRequest request) {
+        UserAccount user = requireUser(id, "ADMIN");
+        updateBaseUser(user, request.fullName(), request.email(), request.phone(), request.active(), request.password());
+        return baseMap(user);
     }
 
     @Transactional
@@ -201,9 +241,24 @@ public class UserManagementService {
         if (!parents.existsById(request.parentId())) {
             throw new NotFoundException("Parent not found: " + request.parentId());
         }
+        StudentParentId linkId = new StudentParentId(request.studentId(), request.parentId());
+        if (studentParents.existsById(linkId)) {
+            throw new IllegalArgumentException("Parent is already linked to this student");
+        }
         StudentParent link = new StudentParent();
-        link.id = new StudentParentId(request.studentId(), request.parentId());
+        link.id = linkId;
         studentParents.save(link);
+    }
+
+    @Transactional
+    public Map<String, Object> changePassword(Long id, ChangePasswordRequest request) {
+        if (isBlank(request.password())) {
+            throw new IllegalArgumentException("password is required");
+        }
+        UserAccount user = users.findById(id).orElseThrow(() -> new NotFoundException("User not found: " + id));
+        user.passwordHash = request.password().trim();
+        users.save(user);
+        return baseMap(user);
     }
 
     private UserAccount createBaseUser(String username, String password, String fullName, String email, String phone, String role, Boolean active) {
@@ -276,10 +331,16 @@ public class UserManagementService {
         return map;
     }
 
+    private Map<String, Object> withoutPassword(Map<String, Object> map) {
+        map.remove("password");
+        return map;
+    }
+
     private Map<String, Object> baseMap(UserAccount user) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", user.id);
         map.put("username", user.username);
+        map.put("password", user.passwordHash);
         map.put("fullName", user.fullName);
         map.put("email", user.email);
         map.put("phone", user.phone);

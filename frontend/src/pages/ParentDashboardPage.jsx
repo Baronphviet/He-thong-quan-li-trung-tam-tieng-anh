@@ -1,64 +1,103 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiGet } from "../services/apiClient";
+import { useAuth } from "../store";
 import { formatMoney } from "../utils/format";
+import { sameId } from "../utils/auth";
+import { getApiErrorMessage } from "../utils/apiError";
+import { Alert, Loading } from "../components/common";
 
 export default function ParentDashboardPage() {
+  const { role, userId } = useAuth();
   const [fees, setFees] = useState([]);
-  const [announcements, setAnnouncements] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([
-      apiGet("/monthly-fees"),
-      apiGet("/public/announcements")
-    ])
-      .then(([feeData, announcementData]) => {
-        setFees(feeData);
-        setAnnouncements(announcementData);
-      })
-      .catch((err) => setError(err.message));
-  }, []);
+    loadParentData();
+  }, [role, userId]);
+
+  async function loadParentData() {
+    setLoading(true);
+    setError("");
+    try {
+      const [feeData, parents] = await Promise.all([
+        apiGet("/monthly-fees"),
+        apiGet("/parents")
+      ]);
+
+      const allFees = Array.isArray(feeData) ? feeData : [];
+      if (role === "PARENT") {
+        const parent = (Array.isArray(parents) ? parents : []).find((item) => sameId(item.id, userId));
+        const studentIds = new Set(parent?.studentIds || []);
+        setFees(allFees.filter((fee) => studentIds.has(fee.studentId)));
+      } else {
+        setFees(allFees);
+      }
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const outstanding = useMemo(
     () => fees.reduce((total, fee) => total + Number(fee.outstandingAmount || 0), 0),
     [fees]
   );
 
+  const tuitionAlerts = useMemo(
+    () => fees.filter((fee) => fee.status === "UNPAID" || fee.status === "PARTIAL"),
+    [fees]
+  );
+
+  if (loading) return <Loading />;
+
   return (
     <main>
       <section className="hero">
-        <p className="eyebrow">Parent portal</p>
-        <h1>Theo doi hoc phi, cong no va thong bao cua trung tam.</h1>
-        <p className="lead">
-          Phu huynh co the xem invoice, so tien da dong va so con thieu. Chuc nang thanh
-          toan that nam o API `/payments`, dashboard admin dang su dung cung endpoint nay.
-        </p>
+        <p className="eyebrow">Cổng phụ huynh</p>
+        <h1>Theo dõi học phí và công nợ của con.</h1>
+        <p className="lead">Hệ thống tự hiển thị nhắc nhở khi còn học phí cần đóng.</p>
       </section>
 
-      {error && <p className="message error">{error}</p>}
+      {error && <Alert type="error" title="Lỗi tải dữ liệu">{error}</Alert>}
+
+      {tuitionAlerts.length > 0 && (
+        <section className="section tuition-alerts">
+          {tuitionAlerts.map((fee) => (
+            <Alert key={fee.id} type="warning" title={`Nhắc đóng học phí - ${fee.studentName}`}>
+              Học sinh <strong>{fee.studentName}</strong> lớp <strong>{fee.className}</strong> kỳ {fee.month}/{fee.year}
+              còn nợ <strong>{formatMoney(fee.outstandingAmount)}</strong>. Hạn đóng: {fee.dueDate || "theo quy định trung tâm"}.
+            </Alert>
+          ))}
+        </section>
+      )}
 
       <section className="section grid three">
         <article className="metric-card">
-          <p className="metric-label">Tong con no</p>
+          <p className="metric-label">Tổng còn nợ</p>
           <p className="metric-value">{formatMoney(outstanding)}</p>
         </article>
         <article className="metric-card">
-          <p className="metric-label">So invoice</p>
+          <p className="metric-label">Số hóa đơn</p>
           <p className="metric-value">{fees.length}</p>
         </article>
         <article className="metric-card">
-          <p className="metric-label">Thong bao</p>
-          <p className="metric-value">{announcements.length}</p>
+          <p className="metric-label">Cần thanh toán</p>
+          <p className="metric-value">{tuitionAlerts.length}</p>
         </article>
       </section>
 
       <section className="section table-card">
-        <p className="eyebrow">UC-P03</p>
-        <h2>Hoc phi cua hoc sinh</h2>
+        <p className="eyebrow">Học phí</p>
+        <h2>Chi tiết hóa đơn</h2>
         <div className="table-scroll">
           <table>
-            <thead><tr><th>Hoc sinh</th><th>Lop</th><th>Ky</th><th>Can thu</th><th>Con no</th><th>Status</th></tr></thead>
+            <thead><tr><th>Học sinh</th><th>Lớp</th><th>Kỳ</th><th>Cần thu</th><th>Còn nợ</th><th>Trạng thái</th></tr></thead>
             <tbody>
+              {fees.length === 0 && (
+                <tr><td colSpan={6} className="muted">Chưa có hóa đơn học phí.</td></tr>
+              )}
               {fees.map((fee) => (
                 <tr key={fee.id}>
                   <td>{fee.studentName}</td>
@@ -72,16 +111,6 @@ export default function ParentDashboardPage() {
             </tbody>
           </table>
         </div>
-      </section>
-
-      <section className="section grid two">
-        {announcements.map((item) => (
-          <article className="panel" key={item.id}>
-            <p className="eyebrow">{item.type}</p>
-            <h2>{item.title}</h2>
-            <p className="lead">{item.content}</p>
-          </article>
-        ))}
       </section>
     </main>
   );

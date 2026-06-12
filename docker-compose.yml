@@ -9,7 +9,7 @@ services:
       MYSQL_DATABASE: english_center
       MYSQL_ROOT_PASSWORD: root
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
@@ -29,6 +29,7 @@ services:
       DB_URL: jdbc:mysql://db:3306/english_center?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USERNAME: root
       DB_PASSWORD: root
+      FLYWAY_ENABLED: "true"
     ports:
       - "8080:8080"
 
@@ -39,7 +40,8 @@ services:
     depends_on:
       - backend
     environment:
-      VITE_API_URL: http://backend:8080/api
+      VITE_API_URL: /api
+      VITE_PROXY_TARGET: http://backend:8080
     ports:
       - "3000:3000"
 

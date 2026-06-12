@@ -58,7 +58,14 @@ public class EnrollmentService {
 
     @Transactional
     public Map<String, Object> createEnrollment(EnrollmentRequest request) {
-        validateReferences(request.studentId(), request.classId());
+        ClassEntity classEntity = validateReferences(request.studentId(), request.classId());
+        if (!"OPEN".equals(classEntity.status)) {
+            throw new IllegalArgumentException("Class is not open for enrollment");
+        }
+        long activeCount = enrollments.countByClassIdAndStatus(request.classId(), "ACTIVE");
+        if (classEntity.maxStudents != null && classEntity.maxStudents > 0 && activeCount >= classEntity.maxStudents) {
+            throw new IllegalArgumentException("Class has reached maximum students");
+        }
         enrollments.findByStudentIdAndClassId(request.studentId(), request.classId()).ifPresent(existing -> {
             throw new IllegalArgumentException("Student already enrolled in this class");
         });
@@ -125,13 +132,14 @@ public class EnrollmentService {
         return updated;
     }
 
-    private void validateReferences(Long studentId, Long classId) {
+    private ClassEntity validateReferences(Long studentId, Long classId) {
         if (studentId == null || !students.existsById(studentId)) {
             throw new NotFoundException("Student not found: " + studentId);
         }
-        if (classId == null || !classes.existsById(classId)) {
+        if (classId == null) {
             throw new NotFoundException("Class not found: " + classId);
         }
+        return classes.findById(classId).orElseThrow(() -> new NotFoundException("Class not found: " + classId));
     }
 
     private Enrollment requireEnrollment(Long id) {

@@ -13,6 +13,7 @@ import com.englishcenter.repository.MonthlyFeeRepository;
 import com.englishcenter.repository.PaymentRepository;
 import com.englishcenter.repository.StudentByClassViewRepository;
 import com.englishcenter.repository.StudentChangeMonthlyViewRepository;
+import com.englishcenter.repository.TeacherSalaryRepository;
 import com.englishcenter.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,6 +35,7 @@ public class FinanceService {
     private final StudentChangeMonthlyViewRepository studentReport;
     private final StudentByClassViewRepository studentsByClass;
     private final AnnouncementRepository announcements;
+    private final TeacherSalaryRepository teacherSalaries;
     private final ClassService classService;
 
     public FinanceService(
@@ -46,6 +48,7 @@ public class FinanceService {
             StudentChangeMonthlyViewRepository studentReport,
             StudentByClassViewRepository studentsByClass,
             AnnouncementRepository announcements,
+            TeacherSalaryRepository teacherSalaries,
             ClassService classService
     ) {
         this.monthlyFees = monthlyFees;
@@ -57,6 +60,7 @@ public class FinanceService {
         this.studentReport = studentReport;
         this.studentsByClass = studentsByClass;
         this.announcements = announcements;
+        this.teacherSalaries = teacherSalaries;
         this.classService = classService;
     }
 
@@ -105,6 +109,34 @@ public class FinanceService {
         map.put("monthTeacherSalaryCost", salaryCost);
         map.put("activeAnnouncements", announcements.findActiveForDate(LocalDate.now()).size());
         return map;
+    }
+
+    public Map<String, Object> statisticsReport() {
+        Map<String, Object> map = new LinkedHashMap<>(dashboardSummary());
+        BigDecimal totalCollected = nullToZero(payments.sumAllPayments());
+        BigDecimal totalSalaryPaid = nullToZero(teacherSalaries.sumPaidSalaries());
+        map.put("totalClasses", classes.count());
+        map.put("totalTuitionCollected", totalCollected);
+        map.put("totalSalaryPaid", totalSalaryPaid);
+        map.put("profit", totalCollected.subtract(totalSalaryPaid));
+        return map;
+    }
+
+    public List<Map<String, Object>> financeMonthlyWithProfit() {
+        return financeReport.findAllByOrderByYearDescMonthDesc().stream().map(row -> {
+            BigDecimal collected = nullToZero(row.tuitionCollected);
+            BigDecimal salary = nullToZero(row.teacherSalaryCost);
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("id", row.id);
+            item.put("year", row.year);
+            item.put("month", row.month);
+            item.put("tuitionExpected", row.tuitionExpected);
+            item.put("tuitionCollected", collected);
+            item.put("tuitionOutstanding", row.tuitionOutstanding);
+            item.put("teacherSalaryCost", salary);
+            item.put("profit", collected.subtract(salary));
+            return item;
+        }).toList();
     }
 
     public List<Map<String, Object>> listFees() {

@@ -65,6 +65,10 @@ public class ClassService {
         return classes.findAllByOrderByCreatedAtDesc().stream().map(this::toMap).toList();
     }
 
+    public List<Map<String, Object>> listOpenClasses() {
+        return classes.findByStatusOrderByClassNameAsc("OPEN").stream().map(this::toMap).toList();
+    }
+
     public Map<String, Object> getClass(Long id) {
         return toMap(requireClass(id));
     }

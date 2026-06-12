@@ -14,4 +14,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @Query(value = "select coalesce(sum(amount), 0) from payment where fee_id = :feeId", nativeQuery = true)
     BigDecimal sumPaidByFeeId(@Param("feeId") Long feeId);
+
+    @Query(value = "select coalesce(sum(amount), 0) from payment", nativeQuery = true)
+    BigDecimal sumAllPayments();
 }
