@@ -129,7 +129,7 @@ export default function ClassesPage() {
   return (
     <main>
       <section className="hero compact-hero">
-        <p className="eyebrow">Quản lý lớp học</p>
+        <p className="eyebrow">🏫 Quản lý lớp học</p>
         <h1>Danh sách lớp học</h1>
         <Button type="button" onClick={handleAddNew}>Thêm lớp</Button>
       </section>
