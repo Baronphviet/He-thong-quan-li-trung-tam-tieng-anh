@@ -1,7 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
 :root {
   color: #17211b;
   background: #f5efe4;
-  font-family: "Trebuchet MS", "Gill Sans", "Segoe UI", sans-serif;
+  font-family: "Nunito", sans-serif;
   --ink: #17211b;
   --muted: #667368;
   --paper: #fffaf0;
@@ -92,8 +93,10 @@ button {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
+  align-items: center;
 }
 
+.nav-links a.active,
 .nav-links a {
   padding: 10px 14px;
   border-radius: 999px;
@@ -101,7 +104,7 @@ button {
   font-weight: 800;
 }
 
-.nav-links a.active,
+
 .nav-user {
   padding: 10px 14px;
   border-radius: 999px;
@@ -129,9 +132,13 @@ button {
 }
 
 .hero {
+  font-family: "Nunito", sans-serif;
   position: relative;
   overflow: hidden;
   padding: clamp(26px, 5vw, 64px);
+  font-size: clamp(3.5rem, 5vw, 5rem);
+  line-height: 2;
+  font-weight: 800;
 }
 
 .compact-hero {
@@ -177,17 +184,17 @@ h2,
 h3 {
   margin: 0;
   color: var(--ink);
-  letter-spacing: -0.055em;
+  letter-spacing: -0.02em;
 }
 
 h1 {
   max-width: 900px;
-  font-size: clamp(2.4rem, 7vw, 6rem);
-  line-height: 0.9;
+  font-size: clamp(2rem, 4vw, 4rem);
+  line-height: 1.12;
 }
 
 h2 {
-  font-size: clamp(1.6rem, 3vw, 2.8rem);
+  font-size: clamp(1.6rem, 2vw, 2rem);
 }
 
 h3 {
@@ -258,7 +265,7 @@ h3 {
   margin: 0;
   font-size: clamp(1.8rem, 4vw, 3.2rem);
   font-weight: 900;
-  letter-spacing: -0.08em;
+  letter-spacing: 0em;
 }
 
 .toolbar {
@@ -474,6 +481,7 @@ th {
   transition: all 0.2s ease;
   min-height: 42px;
 }
+.btn
 
 .btn-primary {
   background: var(--brand);
@@ -483,6 +491,7 @@ th {
 .btn-primary:hover {
   background: var(--brand-strong);
   box-shadow: 0 8px 24px rgba(31, 111, 80, 0.3);
+  color: #fffaf0;
 }
 
 .btn-secondary {
@@ -497,10 +506,12 @@ th {
 .btn-success {
   background: #22863a;
   color: #fffaf0;
+  
 }
 
 .btn-success:hover {
   background: #1b6e2f;
+  color: #fffaf0;
 }
 
 .btn-danger {
@@ -526,6 +537,7 @@ th {
 
 .btn-md {
   padding: 10px 16px;
+  font-size: 0.85rem;
 }
 
 .btn-lg {
@@ -605,13 +617,17 @@ th {
 }
 
 .card-title {
-  margin: 0 0 12px;
+  font-weight: bold;
+  margin: 0 0 0px;
   font-size: 1.1rem;
   color: var(--ink);
+  padding-left: 30px;
+  padding-top: 30px;
 }
 
 .card-body {
-  padding: 20px;
+  padding-top: 0;
+  padding: 30px;
 }
 
 .card-footer {
@@ -1152,4 +1168,328 @@ th {
   align-items: center;
   gap: 8px;
   margin-top: 12px;
+}
+
+.banner-slider-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  border: 1px dashed var(--line);
+  border-radius: 24px;
+}
+ 
+.bsl-placeholder {
+  width: 100%;
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    rgba(31, 111, 80, 0.06),
+    rgba(212, 106, 47, 0.06)
+  );
+}
+ 
+/* Progress bar */
+.bsl-progress-track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 250, 240, 0.25);
+  z-index: 4;
+  overflow: hidden;
+}
+.bsl-progress-bar {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  animation: bsl-grow 5s linear forwards;
+}
+@keyframes bsl-grow {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+ 
+/* Arrow buttons */
+.bsl-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 250, 240, 0.82);
+  color: var(--ink);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 14px rgba(23, 33, 27, 0.18);
+  transition: background 0.18s, color 0.18s, transform 0.18s;
+}
+.bsl-arrow:hover {
+  background: var(--brand);
+  color: #fffaf0;
+  transform: translateY(-50%) scale(1.08);
+}
+.bsl-arrow-left  { left: 14px; }
+.bsl-arrow-right { right: 14px; }
+ 
+/* Slide animation */
+@keyframes bsl-in-next {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes bsl-in-prev {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.bsl-slide-next { animation: bsl-in-next 0.36s ease; }
+.bsl-slide-prev { animation: bsl-in-prev 0.36s ease; }
+.bsl-slide-idle { /* không animation khi mount lần đầu */ }
+ 
+/* Caption text size */
+.bsl-caption-title {
+  display: block;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+.bsl-caption-body {
+  margin: 0;
+  font-size: 0.88rem;
+  opacity: 0.88;
+}
+ 
+/* Bottom bar */
+.bsl-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 2px 0;
+}
+.bsl-counter {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  min-width: 40px;
+}
+.bsl-bar-spacer {
+  min-width: 40px;
+}
+ 
+/* Dot overrides — pill khi active */
+.banner-slider-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.banner-dot {
+  padding: 0;
+  transition: width 0.24s ease, background 0.24s ease;
+}
+.banner-dot.active {
+  width: 24px;
+}
+.section-header {
+  margin-bottom: 20px;
+}
+
+.section-header .eyebrow {
+  margin-bottom: 6px;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+/* ── WelcomePopup ─────────────────────────────────────────── */
+ 
+/* Backdrop với blur mạnh hơn modal thường */
+.wp-backdrop {
+  backdrop-filter: blur(5px);
+}
+ 
+/* Popup card — override lại z-index để nằm trên backdrop */
+.wp-modal {
+  animation: wp-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes wp-in {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.97); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+ 
+/* Banner header màu brand */
+.wp-header {
+  position: relative;
+  padding: 28px 24px 22px;
+  background: linear-gradient(135deg, var(--brand-strong), var(--brand));
+  color: #fffaf0;
+  border-radius: 20px 20px 0 0;
+}
+ 
+.wp-header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(255, 250, 240, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+ 
+.wp-header-title {
+  color: #fffaf0;
+  font-size: 1.3rem;
+  margin: 0 0 6px;
+}
+ 
+.wp-header-sub {
+  margin: 0;
+  font-size: 0.88rem;
+  opacity: 0.82;
+  line-height: 1.5;
+}
+ 
+/* Close button trong header */
+.wp-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(255, 250, 240, 0.15);
+  color: #fffaf0;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+}
+.wp-close:hover {
+  background: rgba(255, 250, 240, 0.3);
+}
+ 
+/* Checklist */
+.wp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.wp-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.95rem;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.wp-check {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(31, 111, 80, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+ 
+/* ── WelcomePopup (backend-driven) ───────────────────────────────────── */
+ 
+.wp-backdrop {
+  backdrop-filter: blur(5px);
+}
+ 
+.wp-modal {
+  animation: wp-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes wp-in {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.97); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+ 
+/* Header: gradient brand khi không có ảnh */
+.wp-header {
+  position: relative;
+  padding: 24px 24px 20px;
+  background: linear-gradient(135deg, var(--brand-strong), var(--brand));
+  border-radius: 20px 20px 0 0;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+}
+.wp-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 250, 240, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+ 
+/* Header: ảnh từ backend */
+.wp-header-img-wrap {
+  position: relative;
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+  max-height: 220px;
+}
+.wp-header-img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+ 
+/* Close button — dùng chung, position khác nhau */
+.wp-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+/* Trên nền gradient (không có ảnh) */
+.wp-close {
+  background: rgba(255, 250, 240, 0.18);
+  color: #fffaf0;
+}
+.wp-close:hover {
+  background: rgba(255, 250, 240, 0.32);
+}
+/* Trên ảnh */
+.wp-close-on-img {
+  background: rgba(23, 33, 27, 0.45);
+  color: #fffaf0;
+  backdrop-filter: blur(4px);
+}
+.wp-close-on-img:hover {
+  background: rgba(23, 33, 27, 0.7);
+}
+ 
+/* Nội dung popup */
+.wp-notice-title {
+  font-size: 1.2rem;
+  margin: 0 0 10px;
+  color: var(--ink);
+}
+.wp-notice-body {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.65;
+  white-space: pre-line;
 }

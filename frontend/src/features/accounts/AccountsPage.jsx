@@ -181,7 +181,7 @@ export default function AccountsPage() {
   return (
     <main>
       <section className="hero compact-hero">
-        <p className="eyebrow">Quản lý tài khoản</p>
+        <p className="eyebrow"> 👤 Quản lý tài khoản</p>
         <h1>Cấp tài khoản theo vai trò</h1>
         <p className="lead">Admin xem tài khoản/mật khẩu, đổi mật khẩu và liên kết phụ huynh với học sinh.</p>
       </section>

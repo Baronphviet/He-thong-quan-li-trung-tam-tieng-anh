@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [values, setValues] = useState({ username: "admin", password: "admin" });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
 
   if (isAuthenticated) {
     return <Navigate to={location.state?.from?.pathname || getRoleHome(role)} replace />;
@@ -26,21 +27,17 @@ export default function LoginPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
-
     if (!values.username.trim() || !values.password.trim()) {
       setError("Vui lòng nhập tài khoản và mật khẩu.");
       return;
     }
-
     setSubmitting(true);
     try {
       const user = await authService.login({
         username: values.username.trim(),
-        password: values.password
+        password: values.password,
       });
-      if (!user?.token || !user?.role) {
-        throw new Error("Phản hồi đăng nhập không hợp lệ.");
-      }
+      if (!user?.token || !user?.role) throw new Error("Phản hồi đăng nhập không hợp lệ.");
       login(user);
       navigate(location.state?.from?.pathname || getRoleHome(user.role), { replace: true });
     } catch (err) {
@@ -63,24 +60,43 @@ export default function LoginPage() {
 
         <form className="login-form" onSubmit={handleSubmit}>
           <Input
-            id="username"
-            label="Tài khoản"
-            name="username"
-            value={values.username}
-            onChange={handleChange}
-            autoComplete="username"
-            disabled={submitting}
+            id="username" label="Tài khoản" name="username"
+            value={values.username} onChange={handleChange}
+            autoComplete="username" disabled={submitting}
           />
           <Input
-            id="password"
-            label="Mật khẩu"
-            name="password"
-            type="password"
-            value={values.password}
-            onChange={handleChange}
-            autoComplete="current-password"
-            disabled={submitting}
+            id="password" label="Mật khẩu" name="password" type="password"
+            value={values.password} onChange={handleChange}
+            autoComplete="current-password" disabled={submitting}
           />
+
+          <div style={{ textAlign: "right", marginTop: "-4px" }}>
+            <button
+              type="button"
+              onClick={() => setShowForgot((v) => !v)}
+              style={{
+                background: "none", border: "none", padding: 0,
+                color: "var(--brand)", fontWeight: 500,
+                fontSize: "0.85rem", cursor: "pointer",
+              }}
+            >
+              Quên mật khẩu?
+            </button>
+          </div>
+
+          {showForgot && (
+            <div className="alert alert-info" style={{ marginBottom: 0 }}>
+              <div className="alert-content">
+                <span className="alert-title">Liên hệ quản trị viên</span>
+                <p className="alert-message">
+                  📞 0901 234 567
+                  <br />
+                  ✉️ admin@ecenglish.vn
+                </p>
+              </div>
+            </div>
+          )}
+
           <Button type="submit" disabled={submitting}>
             {submitting ? "Đang đăng nhập..." : "Đăng nhập"}
           </Button>
