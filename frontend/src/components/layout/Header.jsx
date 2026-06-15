@@ -24,6 +24,7 @@ export default function Header() {
               <NavLink to="/admin/payments">Thanh toán</NavLink>
               <NavLink to="/admin/statistics">Thống kê</NavLink>
               <NavLink to="/admin/announcements">Thông báo</NavLink>
+              <NavLink to="/admin/parent-notifications">Thông báo phụ huynh</NavLink>
             </div>
           </div>
         )}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { announcementService } from "../../services";
-import { Alert, Button, Card, Input, Loading, Modal, Select, Table, Textarea } from "../../components/common";
+import { Button, Input, Loading, Modal, Select, Table, Textarea } from "../../components/common";
 import { useNotification } from "../../hooks";
 import { ANNOUNCEMENT_TYPE_OPTIONS } from "../../utils/constants";
 import { useAuth } from "../../store";
@@ -29,7 +29,7 @@ export default function AnnouncementsPage() {
     loadData();
   }, []);
 
-  async function loadData() {
+  const loadData = async () => {
     setLoading(true);
     try {
       const data = await announcementService.getAll();
@@ -39,17 +39,17 @@ export default function AnnouncementsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  function handleChange(event) {
+  const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
     setValues((current) => ({
       ...current,
       [name]: type === "checkbox" ? checked : value
     }));
-  }
+  };
 
-  async function handleImageUpload(event) {
+  const handleImageUpload = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
@@ -61,9 +61,9 @@ export default function AnnouncementsPage() {
       setValues((current) => ({ ...current, imageUrl: String(reader.result) }));
     };
     reader.readAsDataURL(file);
-  }
+  };
 
-  async function handleSubmit(event) {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitting(true);
     try {
@@ -89,15 +89,15 @@ export default function AnnouncementsPage() {
     } finally {
       setSubmitting(false);
     }
-  }
+  };
 
-  function openCreate() {
+  const openCreate = () => {
     setEditingId(null);
     setValues(emptyForm);
     setModalOpen(true);
-  }
+  };
 
-  function openEdit(item) {
+  const openEdit = (item) => {
     setEditingId(item.id);
     setValues({
       title: item.title || "",
@@ -109,9 +109,9 @@ export default function AnnouncementsPage() {
       active: item.active !== false
     });
     setModalOpen(true);
-  }
+  };
 
-  async function handleDeactivate(id) {
+  const handleDeactivate = async (id) => {
     try {
       await announcementService.delete(id);
       addNotification("Đã tắt thông báo", "success");
@@ -119,7 +119,7 @@ export default function AnnouncementsPage() {
     } catch (err) {
       addNotification(err.message, "error");
     }
-  }
+  };
 
   const columns = [
     { key: "title", label: "Tiêu đề" },
@@ -134,7 +134,7 @@ export default function AnnouncementsPage() {
       key: "actions",
       label: "Thao tác",
       render: (_, row) => (
-        <div className="table-actions">
+        <div className="table-actions" style={{ display: 'flex', gap: '6px' }}>
           <Button variant="secondary" size="sm" type="button" onClick={() => openEdit(row)}>Sửa</Button>
           {row.active && (
             <Button variant="secondary" size="sm" type="button" onClick={() => handleDeactivate(row.id)}>Tắt</Button>

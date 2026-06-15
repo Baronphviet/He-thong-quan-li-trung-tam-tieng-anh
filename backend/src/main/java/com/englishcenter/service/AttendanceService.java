@@ -24,19 +24,23 @@ public class AttendanceService {
     private final ClassRepository classes;
     private final EnrollmentRepository enrollments;
     private final UserRepository users;
+    // 1. Inject EmailService vào đây
+    private final EmailService emailService;
 
     public AttendanceService(
             ClassSessionRepository sessions,
             AttendanceRepository attendances,
             ClassRepository classes,
             EnrollmentRepository enrollments,
-            UserRepository users
+            UserRepository users,
+            EmailService emailService // 2. Thêm vào Constructor
     ) {
         this.sessions = sessions;
         this.attendances = attendances;
         this.classes = classes;
         this.enrollments = enrollments;
         this.users = users;
+        this.emailService = emailService;
     }
 
     public record SessionRequest(
@@ -112,7 +116,9 @@ public class AttendanceService {
 
     @Transactional
     public List<Map<String, Object>> saveAttendance(Long sessionId, List<AttendanceItemRequest> items) {
-        requireSession(sessionId);
+        ClassSession session = requireSession(sessionId); // Lấy session ra để lấy thông tin ngày học và classId
+        ClassEntity classEntity = requireClass(session.classId); // Lấy thông tin tên lớp học
+
         if (items == null || items.isEmpty()) {
             throw new IllegalArgumentException("attendance items are required");
         }
@@ -122,6 +128,7 @@ public class AttendanceService {
                 throw new IllegalArgumentException("studentId is required");
             }
             String status = normalizeStatus(item.status());
+            
             Attendance attendance = attendances.findBySessionIdAndStudentId(sessionId, item.studentId())
                     .orElseGet(() -> {
                         Attendance created = new Attendance();
@@ -129,9 +136,35 @@ public class AttendanceService {
                         created.studentId = item.studentId();
                         return created;
                     });
+            
             attendance.status = status;
             attendance.note = item.note();
             attendances.save(attendance);
+
+            // 3. Logic gửi Email kiểm tra nếu Học viên VẮNG MẶT (ABSENT)
+            if ("ABSENT".equals(status)) {
+                users.findById(item.studentId()).ifPresent(student -> {
+                    if (student.email != null && !student.email.isBlank()) {
+                        String subject = "Thông báo vắng học - Lớp " + classEntity.className;
+                        
+                        // Nội dung viết bằng mã HTML giúp hiển thị chuyên nghiệp
+                        String content = String.format(
+                            "<h3>Thông báo từ Trung tâm Tiếng Anh</h3>" +
+                            "<p>Chào bạn <b>%s</b>,</p>" +
+                            "<p>Hệ thống ghi nhận bạn đã <b>VẮNG MẶT</b> trong buổi học ngày %s (Buổi số %d) của lớp <b>%s</b>.</p>" +
+                            "<p>Nếu có bất kỳ nhầm lẫn nào hoặc cần xin phép nghỉ bù, vui lòng liên hệ sớm với bộ phận Giáo vụ của Trung tâm nhé.</p>" +
+                            "<br><p>Thân ái,</p><p>Ban quản trị Trung tâm Tiếng Anh.</p>",
+                            student.fullName,
+                            session.sessionDate.toString(),
+                            session.sessionNumber,
+                            classEntity.className
+                        );
+                        
+                        // Gọi hàm gửi mail chạy ngầm (Async) đã viết
+                        emailService.sendEmail(student.email, subject, content);
+                    }
+                });
+            }
         }
 
         return attendanceSheet(sessionId);
