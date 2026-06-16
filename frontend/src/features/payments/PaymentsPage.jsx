@@ -108,7 +108,7 @@ export default function PaymentsPage() {
   return (
     <main>
       <section className="hero compact-hero">
-        <p className="eyebrow">Quản lý thanh toán</p>
+        <p className="eyebrow">💳 Quản lý thanh toán</p>
         <h1>Hóa đơn học phí và công nợ</h1>
       </section>
 
