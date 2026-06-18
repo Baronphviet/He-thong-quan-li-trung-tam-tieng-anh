@@ -49,7 +49,14 @@ export default function AccountsPage() {
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState(null);
   const { addNotification } = useNotification();
+
+  function openDetailsModal(account) {
+    setSelectedAccount(account);
+    setDetailsModalOpen(true);
+  }
 
   useEffect(() => {
     loadAccounts();
@@ -158,6 +165,19 @@ export default function AccountsPage() {
     }
   }
 
+  async function handleDeleteAccount(account) {
+    if (!window.confirm(`Bạn có chắc chắn muốn vô hiệu hoá tài khoản "${account.username}" không? Hành động này sẽ khóa tài khoản.`)) {
+      return;
+    }
+    try {
+      await userService.softDelete(account.id);
+      addNotification("Vô hiệu hoá tài khoản thành công", "success");
+      await loadAccounts();
+    } catch (err) {
+      addNotification(err.message, "error");
+    }
+  }
+
   const columns = useMemo(() => [
     { key: "role", label: "Vai trò" },
     { key: "username", label: "Tài khoản" },
@@ -165,13 +185,22 @@ export default function AccountsPage() {
     { key: "fullName", label: "Họ tên" },
     { key: "phone", label: "Điện thoại", render: (value) => value || "-" },
     { key: "active", label: "Trạng thái", render: (value) => <span className="status-pill">{value === false ? "INACTIVE" : "ACTIVE"}</span> },
+    { key: "createdAt", label: "Ngày tạo", render: (value) => value ? new Date(value).toLocaleDateString("vi-VN") : "-" },
     {
       key: "actions",
       label: "Hành động",
       render: (_, row) => (
-        <Button variant="secondary" size="sm" type="button" onClick={() => openPasswordModal(row)}>
-          Đổi mật khẩu
-        </Button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Button variant="secondary" size="sm" type="button" onClick={() => openDetailsModal(row)}>
+            Chi tiết
+          </Button>
+          <Button variant="secondary" size="sm" type="button" onClick={() => openPasswordModal(row)}>
+            Đổi mật khẩu
+          </Button>
+          <Button variant="danger" size="sm" type="button" onClick={() => handleDeleteAccount(row)}>
+            Xoá
+          </Button>
+        </div>
       )
     }
   ], []);
@@ -284,6 +313,46 @@ export default function AccountsPage() {
             onChange={(event) => setPasswordForm((current) => ({ ...current, password: event.target.value }))}
           />
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={detailsModalOpen}
+        title={`Chi tiết tài khoản: ${selectedAccount?.fullName}`}
+        onClose={() => setDetailsModalOpen(false)}
+      >
+        {selectedAccount && (
+          <div className="grid two" style={{ gap: '16px' }}>
+            <div>
+              <p><strong>Vai trò:</strong> {selectedAccount.role}</p>
+              <p><strong>Tài khoản:</strong> {selectedAccount.username}</p>
+              <p><strong>Email:</strong> {selectedAccount.email || "-"}</p>
+              <p><strong>Điện thoại:</strong> {selectedAccount.phone || "-"}</p>
+              <p><strong>Ngày tạo:</strong> {selectedAccount.createdAt ? new Date(selectedAccount.createdAt).toLocaleDateString("vi-VN") : "-"}</p>
+            </div>
+            {selectedAccount.role === "TEACHER" && (
+              <div>
+                <p><strong>Bằng cấp:</strong> {selectedAccount.degree || "-"}</p>
+                <p><strong>Chuyên môn:</strong> {selectedAccount.specialization || "-"}</p>
+                <p><strong>Lương cơ bản:</strong> {selectedAccount.salaryRate || "-"}</p>
+                <p><strong>Ngày vào làm:</strong> {selectedAccount.joinDate ? new Date(selectedAccount.joinDate).toLocaleDateString("vi-VN") : "-"}</p>
+              </div>
+            )}
+            {selectedAccount.role === "STUDENT" && (
+              <div>
+                <p><strong>Ngày sinh:</strong> {selectedAccount.dateOfBirth ? new Date(selectedAccount.dateOfBirth).toLocaleDateString("vi-VN") : "-"}</p>
+                <p><strong>Ngày nhập học:</strong> {selectedAccount.enrollDate ? new Date(selectedAccount.enrollDate).toLocaleDateString("vi-VN") : "-"}</p>
+                <p><strong>Địa chỉ:</strong> {selectedAccount.address || "-"}</p>
+              </div>
+            )}
+            {selectedAccount.role === "PARENT" && (
+              <div>
+                <p><strong>Quan hệ:</strong> {selectedAccount.relationship || "-"}</p>
+                <p><strong>Zalo ID:</strong> {selectedAccount.zaloId || "-"}</p>
+                <p><strong>Facebook ID:</strong> {selectedAccount.facebookId || "-"}</p>
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
     </main>
   );

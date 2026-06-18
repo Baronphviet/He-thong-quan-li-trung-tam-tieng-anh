@@ -20,6 +20,7 @@ export const classService = {
   getAll: () => apiGet("/classes"),
   getOpen: () => apiGet("/classes/open"),
   getById: (id) => apiGet(`/classes/${id}`),
+  getDetails: (id) => apiGet(`/classes/${id}/details`),
   create: (data) => apiPost("/classes", data),
   update: (id, data) => apiPut(`/classes/${id}`, data),
   close: (id) => apiDelete(`/classes/${id}`)
@@ -69,7 +70,15 @@ export const announcementService = {
 
 export const masterService = {
   getAcademicYears: () => apiGet("/master/academic-years"),
+  createAcademicYear: (data) => apiPost("/master/academic-years", data),
+  updateAcademicYear: (id, data) => apiPut(`/master/academic-years/${id}`, data),
+  deleteAcademicYear: (id) => apiDelete(`/master/academic-years/${id}`),
+
   getAgeGroups: () => apiGet("/master/age-groups"),
+  createAgeGroup: (data) => apiPost("/master/age-groups", data),
+  updateAgeGroup: (id, data) => apiPut(`/master/age-groups/${id}`, data),
+  deleteAgeGroup: (id) => apiDelete(`/master/age-groups/${id}`),
+
   getTeachers: () => apiGet("/teachers"),
   getParents: () => apiGet("/parents"),
   getStudents: () => apiGet("/students"),

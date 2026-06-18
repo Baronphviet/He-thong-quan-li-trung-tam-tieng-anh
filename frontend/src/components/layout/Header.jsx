@@ -19,9 +19,11 @@ export default function Header() {
             <NavLink to="/admin">Quản trị</NavLink>
             <div className="nav-submenu">
               <NavLink to="/admin/accounts">Tài khoản</NavLink>
-              <NavLink to="/admin/classes">Lớp học</NavLink>
+              <NavLink to="/admin/master-data">Dữ liệu danh mục</NavLink>
+              <NavLink to="/classes">Lớp học</NavLink>
               <NavLink to="/admin/students">Học sinh</NavLink>
               <NavLink to="/admin/payments">Thanh toán</NavLink>
+              <NavLink to="/admin/teacher-salary">Lương GV</NavLink>
               <NavLink to="/admin/statistics">Thống kê</NavLink>
               <NavLink to="/admin/announcements">Thông báo</NavLink>
               <NavLink to="/admin/parent-notifications">Thông báo phụ huynh</NavLink>

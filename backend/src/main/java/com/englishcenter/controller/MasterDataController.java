@@ -6,12 +6,15 @@ import com.englishcenter.service.MasterDataService;
 import com.englishcenter.service.MasterDataService.AcademicYearRequest;
 import com.englishcenter.service.MasterDataService.AgeGroupRequest;
 import java.util.List;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -38,6 +41,12 @@ public class MasterDataController {
         return service.saveAcademicYear(id, request);
     }
 
+    @DeleteMapping("/academic-years/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAcademicYear(@PathVariable Long id) {
+        service.deleteAcademicYear(id);
+    }
+
     @GetMapping("/age-groups")
     public List<AgeGroup> ageGroups() {
         return service.listAgeGroups();
@@ -51,5 +60,11 @@ public class MasterDataController {
     @PutMapping("/age-groups/{id}")
     public AgeGroup updateAgeGroup(@PathVariable Long id, @RequestBody AgeGroupRequest request) {
         return service.saveAgeGroup(id, request);
+    }
+
+    @DeleteMapping("/age-groups/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAgeGroup(@PathVariable Long id) {
+        service.deleteAgeGroup(id);
     }
 }
