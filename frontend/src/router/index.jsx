@@ -9,6 +9,12 @@ import ClassesPage from "../features/classes/ClassesPage";
 import StudentsPage from "../features/students/StudentsPage";
 import PaymentsPage from "../features/payments/PaymentsPage";
 import AccountsPage from "../features/accounts/AccountsPage";
+import TeacherSalaryPage from "../features/accounts/TeacherSalaryPage";
+import MasterDataPage from "../features/master/MasterDataPage";
+
+// IMPORT THÊM: Trang quản lý thông báo phụ huynh mới tạo
+import ParentNotificationPage from "../features/announcements/ParentNotificationPage";
+
 import TeacherDashboardPage from "../pages/TeacherDashboardPage";
 import TeacherAttendancePage from "../pages/TeacherAttendancePage";
 import StudentDashboardPage from "../pages/StudentDashboardPage";
@@ -40,11 +46,17 @@ export default function AppRouter() {
 
       <Route path="/admin" element={<RequireAuth roles={["ADMIN"]}><AdminDashboard /></RequireAuth>} />
       <Route path="/admin/accounts" element={<RequireAuth roles={["ADMIN"]}><AccountsPage /></RequireAuth>} />
-      <Route path="/admin/classes" element={<RequireAuth roles={["ADMIN"]}><ClassesPage /></RequireAuth>} />
+      <Route path="/classes" element={<RequireAuth roles={["ADMIN", "TEACHER", "STUDENT", "PARENT"]}><ClassesPage /></RequireAuth>} />
       <Route path="/admin/students" element={<RequireAuth roles={["ADMIN"]}><StudentsPage /></RequireAuth>} />
       <Route path="/admin/payments" element={<RequireAuth roles={["ADMIN"]}><PaymentsPage /></RequireAuth>} />
+      <Route path="/admin/teacher-salary" element={<RequireAuth roles={["ADMIN"]}><TeacherSalaryPage /></RequireAuth>} />
       <Route path="/admin/statistics" element={<RequireAuth roles={["ADMIN"]}><StatisticsPage /></RequireAuth>} />
       <Route path="/admin/announcements" element={<RequireAuth roles={["ADMIN"]}><AnnouncementsPage /></RequireAuth>} />
+      
+      {/* ROUTE MỚI: Đăng ký đường dẫn cho trang Thông báo phụ huynh độc lập */}
+      <Route path="/admin/parent-notifications" element={<RequireAuth roles={["ADMIN"]}><ParentNotificationPage /></RequireAuth>} />
+      
+      <Route path="/admin/master-data" element={<RequireAuth roles={["ADMIN"]}><MasterDataPage /></RequireAuth>} />
 
       <Route path="/teacher" element={<RequireAuth roles={["TEACHER"]}><TeacherDashboardPage /></RequireAuth>} />
       <Route path="/teacher/attendance" element={<RequireAuth roles={["TEACHER"]}><TeacherAttendancePage /></RequireAuth>} />

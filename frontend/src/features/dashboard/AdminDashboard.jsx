@@ -11,9 +11,11 @@ import { formatMoney } from "../../utils/format";
 
 const QUICK_LINKS = [
   { to: "/admin/accounts",      icon: "👤", label: "Tài khoản người dùng" },
-  { to: "/admin/classes",       icon: "🏫", label: "Lớp học" },
+  { to: "/admin/master-data",   icon: "📁", label: "Dữ liệu danh mục" },
+  { to: "/classes",             icon: "🏫", label: "Lớp học" },
   { to: "/admin/students",      icon: "🎒", label: "Học sinh" },
   { to: "/admin/payments",      icon: "💳", label: "Ghi nhận thanh toán" },
+  { to: "/admin/teacher-salary",icon: "💰", label: "Lương giáo viên" },
   { to: "/admin/statistics",    icon: "📊", label: "Thống kê tài chính" },
   { to: "/admin/announcements", icon: "📢", label: "Banner thông báo" },
 ];

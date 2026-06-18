@@ -121,6 +121,9 @@ public class ClassService {
         fee.originalAmount = original;
         fee.discountAmount = discount;
         fee.finalAmount = original.subtract(discount).max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
+        if (fee.finalAmount.compareTo(BigDecimal.ZERO) == 0) {
+            fee.status = "PAID";
+        }
     }
 
     private void apply(ClassEntity entity, ClassRequest request) {

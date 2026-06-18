@@ -6,13 +6,16 @@ import { sameId } from "../utils/auth";
 import { getApiErrorMessage } from "../utils/apiError";
 import { Link } from "react-router-dom";
 import { Alert, Button, Loading } from "../components/common";
+import ClassDetailsModal from "../features/classes/ClassDetailsModal";
 
 export default function TeacherDashboardPage() {
   const { role, userId } = useAuth();
   const [classes, setClasses] = useState([]);
   const [studentsByClass, setStudentsByClass] = useState([]);
+  const [salaries, setSalaries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [detailsClassId, setDetailsClassId] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -22,15 +25,17 @@ export default function TeacherDashboardPage() {
       setError("");
 
       try {
-        const [classData, studentData] = await Promise.all([
+        const [classData, studentData, salaryData] = await Promise.all([
           apiGet("/classes"),
-          apiGet("/reports/students-by-class")
+          apiGet("/reports/students-by-class"),
+          role === "TEACHER" ? apiGet(`/teacher-salary/teacher?teacherId=${userId}`) : Promise.resolve([])
         ]);
 
         if (!active) return;
 
         const allClasses = Array.isArray(classData) ? classData : [];
         const allStudents = Array.isArray(studentData) ? studentData : [];
+        const allSalaries = Array.isArray(salaryData) ? salaryData : [];
         const visibleClasses = role === "TEACHER"
           ? allClasses.filter((item) => sameId(item.teacherId, userId))
           : allClasses;
@@ -38,6 +43,7 @@ export default function TeacherDashboardPage() {
 
         setClasses(visibleClasses);
         setStudentsByClass(allStudents.filter((item) => visibleClassIds.has(item.classId)));
+        setSalaries(allSalaries);
       } catch (err) {
         if (active) {
           setError(getApiErrorMessage(err));
@@ -89,27 +95,37 @@ export default function TeacherDashboardPage() {
               Học phí: {formatMoney(item.tuitionFee)}
             </p>
             <p><span className="status-pill">{item.students.length} học sinh</span></p>
+            <Button variant="secondary" size="sm" type="button" onClick={() => setDetailsClassId(item.id)} style={{ marginTop: '10px' }}>
+              Chi tiết
+            </Button>
           </article>
         ))}
       </section>
 
+      <ClassDetailsModal
+        isOpen={!!detailsClassId}
+        classId={detailsClassId}
+        onClose={() => setDetailsClassId(null)}
+      />
+
       <section className="section table-card">
-        <p className="eyebrow">Danh sách lớp</p>
-        <h2>Học sinh đang học</h2>
+        <p className="eyebrow">Lịch sử lương</p>
+        <h2>Thanh toán lương</h2>
         <div className="table-scroll">
           <table>
-            <thead><tr><th>Lớp</th><th>Học sinh</th><th>Điện thoại</th><th>Giảm giá</th><th>Trạng thái</th></tr></thead>
+            <thead><tr><th>Kỳ lương (Tháng/Năm)</th><th>Số buổi dạy</th><th>Thực lĩnh</th><th>Trạng thái</th><th>Ngày nhận</th><th>Ghi chú</th></tr></thead>
             <tbody>
-              {studentsByClass.length === 0 && (
-                <tr><td colSpan={5} className="muted">Chưa có học sinh trong lớp được phân công.</td></tr>
+              {salaries.length === 0 && (
+                <tr><td colSpan={6} className="muted">Chưa có dữ liệu lương.</td></tr>
               )}
-              {studentsByClass.map((student) => (
-                <tr key={student.enrollmentId}>
-                  <td>{student.className}</td>
-                  <td>{student.fullName}</td>
-                  <td>{student.phone || "-"}</td>
-                  <td>{Math.round(Number(student.discountRate || 0) * 100)}%</td>
-                  <td><span className="status-pill">{student.status}</span></td>
+              {salaries.map((salary) => (
+                <tr key={salary.salaryId}>
+                  <td>{salary.month}/{salary.year}</td>
+                  <td>{salary.totalSessions}</td>
+                  <td>{formatMoney(salary.amount)}</td>
+                  <td><span className={`status-pill ${salary.status === "PENDING" ? "warning" : "success"}`}>{salary.status === "PENDING" ? "Chưa thanh toán" : "Đã thanh toán"}</span></td>
+                  <td>{salary.paidDate ? new Date(salary.paidDate).toLocaleDateString("vi-VN") : "-"}</td>
+                  <td>{salary.note || "-"}</td>
                 </tr>
               ))}
             </tbody>

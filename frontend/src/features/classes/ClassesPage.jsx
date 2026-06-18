@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { classService, masterService } from "../../services";
+import { apiGet } from "../../services/apiClient";
+import ClassDetailsModal from "./ClassDetailsModal";
 import { Alert, Button, Input, Loading, Modal, Select, Table } from "../../components/common";
 import { useForm, useModal, useNotification } from "../../hooks";
+import { useAuth } from "../../store";
 import { createValidator, validators } from "../../utils/validators";
 import { CLASS_STATUS_OPTIONS } from "../../utils/constants";
 import { formatMoney } from "../../utils/format";
@@ -34,7 +37,9 @@ export default function ClassesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [detailsClassId, setDetailsClassId] = useState(null);
   const { addNotification } = useNotification();
+  const { role, userId } = useAuth();
   const { isOpen, open, close } = useModal();
   const form = useForm(emptyClass, handleSubmit, createValidator(validateRules));
 
@@ -46,13 +51,29 @@ export default function ClassesPage() {
     setLoading(true);
     setError("");
     try {
-      const [classesData, teachersData, groupsData, yearsData] = await Promise.all([
+      const [classesData, teachersData, groupsData, yearsData, enrollmentsData, parents] = await Promise.all([
         classService.getAll(),
-        masterService.getTeachers(),
-        masterService.getAgeGroups(),
-        masterService.getAcademicYears()
+        role === "ADMIN" ? masterService.getTeachers() : Promise.resolve([]),
+        role === "ADMIN" ? masterService.getAgeGroups() : Promise.resolve([]),
+        role === "ADMIN" ? masterService.getAcademicYears() : Promise.resolve([]),
+        role === "STUDENT" || role === "PARENT" ? apiGet("/reports/students-by-class") : Promise.resolve([]),
+        role === "PARENT" ? apiGet("/parents") : Promise.resolve([])
       ]);
-      setClasses(Array.isArray(classesData) ? classesData : []);
+
+      let visibleClasses = Array.isArray(classesData) ? classesData : [];
+      if (role === "TEACHER") {
+        visibleClasses = visibleClasses.filter(c => String(c.teacherId) === String(userId));
+      } else if (role === "STUDENT") {
+        const classIds = new Set((enrollmentsData || []).filter(e => String(e.studentId) === String(userId)).map(e => e.classId));
+        visibleClasses = visibleClasses.filter(c => classIds.has(c.id));
+      } else if (role === "PARENT") {
+        const parent = (parents || []).find((item) => String(item.id) === String(userId));
+        const studentIds = new Set(parent?.studentIds || []);
+        const classIds = new Set((enrollmentsData || []).filter(e => studentIds.has(e.studentId)).map(e => e.classId));
+        visibleClasses = visibleClasses.filter(c => classIds.has(c.id));
+      }
+
+      setClasses(visibleClasses);
       setTeachers(Array.isArray(teachersData) ? teachersData : []);
       setAgeGroups(Array.isArray(groupsData) ? groupsData : []);
       setAcademicYears(Array.isArray(yearsData) ? yearsData : []);
@@ -95,6 +116,10 @@ export default function ClassesPage() {
     open();
   }
 
+  function handleViewDetails(classItem) {
+    setDetailsClassId(classItem.id);
+  }
+
   function handleAddNew() {
     form.setValues(emptyClass);
     setEditingId(null);
@@ -113,13 +138,21 @@ export default function ClassesPage() {
     { key: "schedule", label: "Lịch học" },
     { key: "tuitionFee", label: "Học phí", render: (value) => formatMoney(value) },
     { key: "status", label: "Trạng thái", render: (value) => <span className="status-pill">{value}</span> },
+    { key: "createdAt", label: "Ngày tạo", render: (value) => value ? new Date(value).toLocaleDateString("vi-VN") : "-" },
     {
       key: "actions",
       label: "Hành động",
       render: (_, row) => (
-        <Button variant="secondary" size="sm" type="button" onClick={() => handleEdit(row)}>
-          Sửa
-        </Button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Button variant="secondary" size="sm" type="button" onClick={() => handleViewDetails(row)}>
+            Chi tiết
+          </Button>
+          {role === "ADMIN" && (
+            <Button variant="secondary" size="sm" type="button" onClick={() => handleEdit(row)}>
+              Sửa
+            </Button>
+          )}
+        </div>
       )
     }
   ];
@@ -131,7 +164,7 @@ export default function ClassesPage() {
       <section className="hero compact-hero">
         <p className="eyebrow">🏫 Quản lý lớp học</p>
         <h1>Danh sách lớp học</h1>
-        <Button type="button" onClick={handleAddNew}>Thêm lớp</Button>
+        {role === "ADMIN" && <Button type="button" onClick={handleAddNew}>Thêm lớp</Button>}
       </section>
 
       {error && <Alert type="error" title="Lỗi tải dữ liệu" onClose={() => setError("")}>{error}</Alert>}
@@ -139,6 +172,12 @@ export default function ClassesPage() {
       <section className="section table-card">
         <Table columns={columns} data={classes} empty="Chưa có lớp nào" />
       </section>
+
+      <ClassDetailsModal
+        isOpen={!!detailsClassId}
+        classId={detailsClassId}
+        onClose={() => setDetailsClassId(null)}
+      />
 
       <ClassFormModal
         isOpen={isOpen}

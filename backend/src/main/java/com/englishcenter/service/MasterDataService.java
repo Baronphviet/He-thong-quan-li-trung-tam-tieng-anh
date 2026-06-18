@@ -44,6 +44,18 @@ public class MasterDataService {
         return academicYears.save(year);
     }
 
+    @Transactional
+    public void deleteAcademicYear(Long id) {
+        if (!academicYears.existsById(id)) {
+            throw new NotFoundException("Academic year not found: " + id);
+        }
+        try {
+            academicYears.deleteById(id);
+        } catch (Exception e) {
+            throw new IllegalStateException("Không thể xoá năm học này vì đã có dữ liệu lớp học tham chiếu đến.", e);
+        }
+    }
+
     public List<AgeGroup> listAgeGroups() {
         return ageGroups.findAllByOrderByGroupNameAsc();
     }
@@ -58,6 +70,18 @@ public class MasterDataService {
         group.groupName = request.groupName().trim();
         group.description = request.description();
         return ageGroups.save(group);
+    }
+
+    @Transactional
+    public void deleteAgeGroup(Long id) {
+        if (!ageGroups.existsById(id)) {
+            throw new NotFoundException("Age group not found: " + id);
+        }
+        try {
+            ageGroups.deleteById(id);
+        } catch (Exception e) {
+            throw new IllegalStateException("Không thể xoá độ tuổi này vì đã có dữ liệu lớp học tham chiếu đến.", e);
+        }
     }
 
     private boolean isBlank(String value) {

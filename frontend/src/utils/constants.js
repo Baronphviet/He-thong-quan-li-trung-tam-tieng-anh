@@ -26,7 +26,6 @@ export const FEE_STATUS_OPTIONS = [
 ];
 
 export const ANNOUNCEMENT_TYPE_OPTIONS = [
-  { value: "BANNER", label: "Banner" },
   { value: "POPUP", label: "Popup" },
   { value: "SLIDER", label: "Slider trang chủ" }
 ];

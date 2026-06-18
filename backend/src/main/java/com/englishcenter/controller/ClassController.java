@@ -1,5 +1,6 @@
 package com.englishcenter.controller;
 
+import com.englishcenter.service.ClassDetailsService;
 import com.englishcenter.service.ClassService;
 import com.englishcenter.service.ClassService.ClassRequest;
 import java.util.List;
@@ -19,9 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/classes")
 public class ClassController {
     private final ClassService service;
+    private final ClassDetailsService detailsService;
 
-    public ClassController(ClassService service) {
+    public ClassController(ClassService service, ClassDetailsService detailsService) {
         this.service = service;
+        this.detailsService = detailsService;
     }
 
     @GetMapping
@@ -37,6 +40,11 @@ public class ClassController {
     @GetMapping("/{id}")
     public Map<String, Object> get(@PathVariable Long id) {
         return service.getClass(id);
+    }
+
+    @GetMapping("/{id}/details")
+    public Map<String, Object> getDetails(@PathVariable Long id) {
+        return detailsService.getClassDetails(id);
     }
 
     @PostMapping
