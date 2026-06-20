@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   if (isAuthenticated) {
     return <Navigate to={location.state?.from?.pathname || getRoleHome(role)} replace />;
@@ -50,8 +51,8 @@ export default function LoginPage() {
   return (
     <main className="auth-page">
       <section className="login-panel">
-        <p className="eyebrow">Đăng nhập hệ thống</p>
-        <h1>Trung tâm Tiếng Anh</h1>
+        <p className="eyebrow"> Đăng nhập hệ thống</p>
+        <h1>English Center</h1>
         <p className="lead">
           Không có đăng ký công khai. Tài khoản được admin tạo và cấp riêng cho từng vai trò.
         </p>
@@ -59,23 +60,73 @@ export default function LoginPage() {
         {error && <Alert type="error" title="Đăng nhập thất bại">{error}</Alert>}
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <Input
-            id="username" label="Tài khoản" name="username"
-            value={values.username} onChange={handleChange}
-            autoComplete="username" disabled={submitting}
-          />
-          <Input
-            id="password" label="Mật khẩu" name="password" type="password"
-            value={values.password} onChange={handleChange}
-            autoComplete="current-password" disabled={submitting}
-          />
+          <div className="input-icon">
+            <span className="icon">
+              {/* USER SVG */}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M20 21C20 17.6863 16.4183 15 12 15C7.58172 15 4 17.6863 4 21"
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="12" cy="7" r="4"
+                        stroke="currentColor" strokeWidth="2"/>
+              </svg>
+            </span>
+
+                      <input
+                          name="username"
+                          value={values.username}
+                          onChange={handleChange}
+                          placeholder="Tài khoản"
+                      />
+                    </div>
+          <div className="input-icon">
+  <span className="icon">
+    {/* LOCK SVG */}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <rect x="5" y="11" width="14" height="10" rx="2"
+            stroke="currentColor" strokeWidth="2"/>
+      <path d="M8 11V7a4 4 0 0 1 8 0v4"
+            stroke="currentColor" strokeWidth="2"/>
+    </svg>
+  </span>
+
+            <input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={values.password}
+                onChange={handleChange}
+                placeholder="Mật khẩu"
+            />
+
+            <button
+                type="button"
+                className="eye-btn"
+                onClick={() => setShowPassword(v => !v)}
+            >
+              {showPassword ? (
+                  /* eye off */
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 3l18 18" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M10.58 10.58A3 3 0 0 0 12 15a3 3 0 0 0 2.42-4.42"
+                          stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+              ) : (
+                  /* eye */
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"
+                          stroke="currentColor" strokeWidth="2"/>
+                    <circle cx="12" cy="12" r="3"
+                            stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+              )}
+            </button>
+          </div>
 
           <div style={{ textAlign: "right", marginTop: "-4px" }}>
             <button
               type="button"
               onClick={() => setShowForgot((v) => !v)}
               style={{
-                background: "none", border: "none", padding: 0,
+                background: "none", border: "none", padding: 10,
                 color: "var(--brand)", fontWeight: 500,
                 fontSize: "0.85rem", cursor: "pointer",
               }}
@@ -89,9 +140,9 @@ export default function LoginPage() {
               <div className="alert-content">
                 <span className="alert-title">Liên hệ quản trị viên</span>
                 <p className="alert-message">
-                  📞 0901 234 567
-                  <br />
-                  ✉️ admin@ecenglish.vn
+                  📞 0900000001
+                    <br />
+                  ✉️ admin@english.local
                 </p>
               </div>
             </div>

@@ -86,7 +86,7 @@ export function apiPost(path, body) {
 
 export function apiPut(path, body) {
   return apiFetch(path, {
-    method: "PUT",
+    method: "PATCH",
     body: JSON.stringify(body)
   });
 }

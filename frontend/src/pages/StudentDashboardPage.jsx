@@ -130,7 +130,6 @@ export default function StudentDashboardPage() {
       )}
 
       <section className="section table-card">
-        <p className="eyebrow">UC-S01</p>
         <h2>Lớp của học sinh</h2>
         <div className="table-scroll">
           <table>
@@ -171,7 +170,6 @@ export default function StudentDashboardPage() {
 
       {role === "STUDENT" && (
         <section className="section table-card">
-          <p className="eyebrow">UC-S02</p>
           <h2>Lịch sử điểm danh</h2>
           <div className="table-scroll">
             <table>
@@ -199,7 +197,6 @@ export default function StudentDashboardPage() {
         {fees.length === 0 && <p className="muted">Chưa có hóa đơn học phí.</p>}
         {fees.map((fee) => (
           <article className="panel" key={fee.id}>
-            <p className="eyebrow">Invoice #{fee.id}</p>
             <h2>{fee.studentName}</h2>
             <p className="lead">
               {fee.className} - {fee.month}/{fee.year}<br />

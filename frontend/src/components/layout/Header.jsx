@@ -14,34 +14,9 @@ export default function Header() {
       <nav className="nav-links">
         <NavLink to="/">Trang chủ</NavLink>
 
-        {role === "ADMIN" && (
-          <div className="nav-group">
-            <NavLink to="/admin">Quản trị</NavLink>
-            <div className="nav-submenu">
-              <NavLink to="/admin/accounts">Tài khoản</NavLink>
-              <NavLink to="/admin/master-data">Dữ liệu danh mục</NavLink>
-              <NavLink to="/classes">Lớp học</NavLink>
-              <NavLink to="/admin/students">Học sinh</NavLink>
-              <NavLink to="/admin/payments">Thanh toán</NavLink>
-              <NavLink to="/admin/teacher-salary">Lương GV</NavLink>
-              <NavLink to="/admin/statistics">Thống kê</NavLink>
-              <NavLink to="/admin/announcements">Thông báo</NavLink>
-              <NavLink to="/admin/parent-notifications">Thông báo phụ huynh</NavLink>
-            </div>
-          </div>
+        {isAuthenticated && role && (
+          <NavLink to={getRoleHome(role)}>Tổng quan</NavLink>
         )}
-
-        {role === "TEACHER" && (
-          <div className="nav-group">
-            <NavLink to="/teacher">Giáo viên</NavLink>
-            <div className="nav-submenu">
-              <NavLink to="/teacher/attendance">Điểm danh</NavLink>
-            </div>
-          </div>
-        )}
-
-        {role === "STUDENT" && <NavLink to="/student">Học sinh</NavLink>}
-        {role === "PARENT" && <NavLink to="/parent">Phụ huynh</NavLink>}
 
         {isAuthenticated ? (
           <>

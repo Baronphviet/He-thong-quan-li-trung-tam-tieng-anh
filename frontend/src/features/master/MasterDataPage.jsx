@@ -101,7 +101,6 @@ export default function MasterDataPage() {
   return (
     <main>
       <section className="hero compact-hero">
-        <p className="eyebrow">Quản trị</p>
         <h1>Dữ liệu danh mục</h1>
         <p className="lead">Quản lý Năm học và Độ tuổi</p>
       </section>

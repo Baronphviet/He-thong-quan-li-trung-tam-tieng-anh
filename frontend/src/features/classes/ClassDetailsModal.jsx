@@ -35,6 +35,7 @@ export default function ClassDetailsModal({ classId, isOpen, onClose }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div className="grid two" style={{ gap: '16px' }}>
             <div>
+              <p><strong>Mã lớp:</strong> {classInfo.classId ?? classId}</p>
               <p><strong>Tên lớp:</strong> {classInfo.className}</p>
               <p><strong>Ngày tạo:</strong> {classInfo.createdAt ? new Date(classInfo.createdAt).toLocaleDateString("vi-VN") : "-"}</p>
               <p><strong>Giáo viên phụ trách:</strong> {classInfo.teacherName || "Chưa gán"}</p>
