@@ -86,7 +86,7 @@ export function apiPost(path, body) {
 
 export function apiPut(path, body) {
   return apiFetch(path, {
-    method: "PATCH",
+    method: "PUT",
     body: JSON.stringify(body)
   });
 }
@@ -94,5 +94,11 @@ export function apiPut(path, body) {
 export function apiDelete(path) {
   return apiFetch(path, {
     method: "DELETE"
+  });
+}
+export function apiPatch(path, body) {
+  return apiFetch(path, {
+    method: "PATCH",
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {})
   });
 }
