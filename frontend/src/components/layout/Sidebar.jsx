@@ -42,11 +42,17 @@ const MENU = {
   },
   STUDENT: {
     title: "Học sinh",
-    items: [{ to: "/student", label: "Tổng quan", icon: "grid", end: true }]
+    items: [
+      { to: "/student", label: "Tổng quan", icon: "grid", end: true },
+      { to: "/student/attendance", label: "Điểm danh", icon: "check" }
+    ]
   },
   PARENT: {
     title: "Phụ huynh",
-    items: [{ to: "/parent", label: "Tổng quan", icon: "grid", end: true }]
+    items: [
+      { to: "/parent", label: "Tổng quan", icon: "grid", end: true },
+      { to: "/parent/attendance", label: "Điểm danh", icon: "check" }
+    ]
   }
 };
 

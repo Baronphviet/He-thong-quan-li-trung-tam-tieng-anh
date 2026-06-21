@@ -78,7 +78,7 @@ export default function TeacherSalaryPage() {
     { key: "salaryRate", label: "Lương cơ bản", render: (value) => formatMoney(value) },
     { key: "totalSessions", label: "Số buổi dạy" },
     { key: "amount", label: "Thực lĩnh", render: (value) => formatMoney(value) },
-    { key: "status", label: "Trạng thái", render: (value) => <span className={`status-pill ${value === "PENDING" ? "warning" : "success"}`}>{value === "PENDING" ? "Chưa thanh toán" : "Đã thanh toán"}</span> },
+    { key: "status", label: "Trạng thái", render: (value) => <span className={`status-pill ${value === "PENDING" ? "danger" : "success"}`}>{value === "PENDING" ? "Chưa thanh toán" : "Đã thanh toán"}</span> },
     { key: "paidDate", label: "Ngày trả", render: (value) => value ? new Date(value).toLocaleDateString("vi-VN") : "-" },
     {
       key: "actions",
@@ -115,9 +115,9 @@ export default function TeacherSalaryPage() {
               <input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} className="input-field" style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--line)", background: "#fff", width: "100px" }} />
             </div>
           </div>
-          <div style={{ background: "var(--surface)", padding: "12px 16px", borderRadius: "8px", border: "1px solid var(--line)" }}>
-            <span style={{ fontSize: "0.85rem", color: "var(--muted)", fontWeight: "bold" }}>TỔNG LƯƠNG CHƯA THANH TOÁN:</span>
-            <span style={{ marginLeft: "10px", fontSize: "1.1rem", fontWeight: "bold", color: "var(--error)" }}>
+          <div style={{ background: "rgba(168, 65, 50, 0.1)", padding: "12px 16px", borderRadius: "8px", border: "1px solid rgba(168, 65, 50, 0.2)" }}>
+            <span style={{ fontSize: "0.85rem", color: "var(--danger)", fontWeight: "bold" }}>TỔNG LƯƠNG CHƯA THANH TOÁN:</span>
+            <span style={{ marginLeft: "10px", fontSize: "1.1rem", fontWeight: "bold", color: "var(--danger)" }}>
               {formatMoney(salaries.filter(s => s.status !== "PAID").reduce((sum, s) => sum + (s.amount || s.salaryRate || 0), 0))}
             </span>
           </div>

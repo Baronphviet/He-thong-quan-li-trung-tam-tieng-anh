@@ -112,7 +112,7 @@ public class EnrollmentService {
                     fee.month = date.getMonthValue();
                     fee.year = date.getYear();
                     fee.totalSessions = totalSessions;
-                    fee.dueDate = LocalDate.of(date.getYear(), date.getMonth(), Math.min(10, date.lengthOfMonth()));
+                    fee.dueDate = LocalDate.of(date.getYear(), date.getMonth(), date.lengthOfMonth());
                     fee.status = "UNPAID";
                     classService.applyAmounts(fee, classEntity.tuitionFee, enrollment.discountRate);
                     return monthlyFees.save(fee);

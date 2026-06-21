@@ -18,6 +18,7 @@ import TeacherDashboardPage from "../pages/TeacherDashboardPage";
 import TeacherAttendancePage from "../pages/TeacherAttendancePage";
 import StudentDashboardPage from "../pages/StudentDashboardPage";
 import ParentDashboardPage from "../pages/ParentDashboardPage";
+import AttendanceHistoryPage from "../pages/AttendanceHistoryPage";
 import { DashboardLayout } from "../components/layout";
 import { useAuth } from "../store";
 import { getRoleHome } from "../utils/auth";
@@ -67,7 +68,9 @@ export default function AppRouter() {
       <Route path="/teacher" element={<RequireAuth roles={["TEACHER"]}><DashboardLayout><TeacherDashboardPage /></DashboardLayout></RequireAuth>} />
       <Route path="/teacher/attendance" element={<RequireAuth roles={["TEACHER"]}><DashboardLayout><TeacherAttendancePage /></DashboardLayout></RequireAuth>} />
       <Route path="/student" element={<RequireAuth roles={["STUDENT"]}><DashboardLayout><StudentDashboardPage /></DashboardLayout></RequireAuth>} />
+      <Route path="/student/attendance" element={<RequireAuth roles={["STUDENT"]}><DashboardLayout><AttendanceHistoryPage /></DashboardLayout></RequireAuth>} />
       <Route path="/parent" element={<RequireAuth roles={["PARENT"]}><DashboardLayout><ParentDashboardPage /></DashboardLayout></RequireAuth>} />
+      <Route path="/parent/attendance" element={<RequireAuth roles={["PARENT"]}><DashboardLayout><AttendanceHistoryPage /></DashboardLayout></RequireAuth>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

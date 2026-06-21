@@ -119,7 +119,7 @@ public class UserController {
         service.softDelete(id);
     }
 
-    @PatchMapping("/users/{id}/activate")
+    @PutMapping("/users/{id}/activate")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void activate(@PathVariable Long id) {
         service.activate(id);

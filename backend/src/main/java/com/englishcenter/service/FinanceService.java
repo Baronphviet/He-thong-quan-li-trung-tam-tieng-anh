@@ -101,6 +101,7 @@ public class FinanceService {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("activeStudents", users.countByRoleAndActiveTrue("STUDENT"));
         map.put("activeTeachers", users.countByRoleAndActiveTrue("TEACHER"));
+        map.put("activeParents", users.countByRoleAndActiveTrue("PARENT"));
         map.put("openClasses", classes.countByStatus("OPEN"));
         map.put("activeEnrollments", enrollments.countByStatus("ACTIVE"));
         map.put("monthExpected", expected);
@@ -162,7 +163,7 @@ public class FinanceService {
         fee.month = request.month();
         fee.year = request.year();
         fee.totalSessions = request.totalSessions() == null ? 0 : request.totalSessions();
-        fee.dueDate = request.dueDate();
+        fee.dueDate = request.dueDate() == null ? LocalDate.of(enrollment.enrollDate.getYear(), enrollment.enrollDate.getMonth(), enrollment.enrollDate.lengthOfMonth()) : request.dueDate();
         fee.status = "UNPAID";
         classService.applyAmounts(fee, classEntity.tuitionFee, enrollment.discountRate);
         return feeMap(monthlyFees.save(fee));
@@ -216,6 +217,36 @@ public class FinanceService {
 
     public List<?> studentsByClassReport(Long classId) {
         return classId == null ? studentsByClass.findAll() : studentsByClass.findByClassIdOrderByFullNameAsc(classId);
+    }
+
+    public List<Map<String, Object>> studentGrowthStatistics(String groupBy) {
+        List<com.englishcenter.entity.UserAccount> students = users.findByRoleOrderByCreatedAtAsc("STUDENT");
+        Map<String, Integer> counts = new java.util.LinkedHashMap<>();
+        java.time.format.DateTimeFormatter fmt;
+        if ("year".equalsIgnoreCase(groupBy)) {
+            fmt = java.time.format.DateTimeFormatter.ofPattern("yyyy");
+        } else if ("month".equalsIgnoreCase(groupBy)) {
+            fmt = java.time.format.DateTimeFormatter.ofPattern("MM/yyyy");
+        } else {
+            fmt = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        }
+
+        for (com.englishcenter.entity.UserAccount s : students) {
+            String key = s.createdAt != null ? s.createdAt.format(fmt) : "Unknown";
+            counts.put(key, counts.getOrDefault(key, 0) + 1);
+        }
+
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        int cumulative = 0;
+        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+            cumulative += entry.getValue();
+            Map<String, Object> map = new java.util.LinkedHashMap<>();
+            map.put("label", entry.getKey());
+            map.put("count", cumulative); // Tổng tích lũy
+            map.put("newStudents", entry.getValue()); // Tăng thêm
+            result.add(map);
+        }
+        return result;
     }
 
     @Transactional

@@ -100,17 +100,21 @@ public class EmailController {
                 
                 return ResponseEntity.ok(Map.of("message", "Đã kích hoạt gửi mail thông báo tới " + dataList.size() + " phụ huynh của lớp " + classId));
 
-            case "EMERGENCY_SMS": // Loại 3: Tin nhắn SMS khẩn cấp mô phỏng tổng đài
-                String phone = (String) request.get("phone");
-                String smsContent = (String) request.get("smsContent");
+            case "CUSTOM_EMAIL": // Loại 3: Gửi email tự do
+                @SuppressWarnings("unchecked")
+                List<String> customEmails = (List<String>) request.get("emails");
+                String customSubject = (String) request.get("subject");
+                String customContent = (String) request.get("content");
 
-                System.out.println("=================================================");
-                System.out.println("📱 [SMS GATEWAY] KÍCH HOẠT TỔNG ĐÀI GỬI TIN KHẨN ");
-                System.out.println("📞 Số điện thoại nhận: " + phone);
-                System.out.println("💬 Nội dung: " + smsContent);
-                System.out.println("=================================================");
+                if (customEmails == null || customEmails.isEmpty()) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "Danh sách Email nhận trống!"));
+                }
+
+                for (String email : customEmails) {
+                    emailService.sendEmail(email, customSubject, customContent);
+                }
                 
-                return ResponseEntity.ok(Map.of("message", "Đã kích hoạt lệnh gửi tin nhắn khẩn cấp thành công!"));
+                return ResponseEntity.ok(Map.of("message", "Đã gửi email thành công tới " + customEmails.size() + " địa chỉ!"));
 
             default:
                 return ResponseEntity.badRequest().body(Map.of("message", "Nghiệp vụ không được hỗ trợ!"));

@@ -8,9 +8,11 @@ import com.englishcenter.entity.StudentParent;
 import com.englishcenter.repository.AttendanceRepository;
 import com.englishcenter.repository.ClassSessionRepository;
 import com.englishcenter.repository.MonthlyFeeRepository;
+import com.englishcenter.repository.PaymentRepository;
 import com.englishcenter.repository.StudentByClassViewRepository;
 import com.englishcenter.repository.StudentParentRepository;
 import com.englishcenter.repository.UserRepository;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,11 +28,12 @@ public class ClassDetailsService {
     private final AttendanceRepository attendances;
     private final StudentParentRepository studentParents;
     private final UserRepository users;
+    private final PaymentRepository payments;
 
     public ClassDetailsService(ClassService classService, StudentByClassViewRepository studentsView,
                                MonthlyFeeRepository fees, ClassSessionRepository sessions,
                                AttendanceRepository attendances, StudentParentRepository studentParents,
-                               UserRepository users) {
+                               UserRepository users, PaymentRepository payments) {
         this.classService = classService;
         this.studentsView = studentsView;
         this.fees = fees;
@@ -38,6 +41,7 @@ public class ClassDetailsService {
         this.attendances = attendances;
         this.studentParents = studentParents;
         this.users = users;
+        this.payments = payments;
     }
 
     public Map<String, Object> getClassDetails(Long classId) {
@@ -58,8 +62,17 @@ public class ClassDetailsService {
 
             // Fee status
             List<MonthlyFee> studentFees = fees.findByEnrollmentId(student.enrollmentId);
-            long unpaidCount = studentFees.stream().filter(f -> "UNPAID".equals(f.status)).count();
+            long unpaidCount = studentFees.stream().filter(f -> !"PAID".equals(f.status)).count();
+            BigDecimal unpaidAmount = BigDecimal.ZERO;
+            for (MonthlyFee f : studentFees) {
+                if (!"PAID".equals(f.status)) {
+                    BigDecimal paid = payments.sumPaidByFeeId(f.id);
+                    if (paid == null) paid = BigDecimal.ZERO;
+                    unpaidAmount = unpaidAmount.add(f.finalAmount.subtract(paid));
+                }
+            }
             sm.put("unpaidFeeCount", unpaidCount);
+            sm.put("unpaidAmount", unpaidAmount);
 
             // Attendance stats
             long present = 0, absent = 0, late = 0;

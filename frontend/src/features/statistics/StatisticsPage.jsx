@@ -133,21 +133,25 @@ function LineChartCard({ finance }) {
 export default function StatisticsPage() {
   const [stats, setStats]     = useState(null);
   const [finance, setFinance] = useState([]);
+  const [growth, setGrowth]   = useState([]);
+  const [growthPeriod, setGrowthPeriod] = useState("month");
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState("");
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [growthPeriod]);
 
   async function loadData() {
     setLoading(true);
     setError("");
     try {
-      const [statsData, financeData] = await Promise.all([
+      const [statsData, financeData, growthData] = await Promise.all([
         dashboardService.getStatistics(),
         dashboardService.getFinanceProfit(),
+        dashboardService.getStudentGrowth(growthPeriod),
       ]);
       setStats(statsData);
       setFinance(Array.isArray(financeData) ? financeData : []);
+      setGrowth(Array.isArray(growthData) ? growthData : []);
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -170,7 +174,7 @@ export default function StatisticsPage() {
         <MetricCard label="Học sinh"          value={stats?.activeStudents ?? "-"} />
         <MetricCard label="Giáo viên"         value={stats?.activeTeachers ?? "-"} />
         <MetricCard label="Lớp học"           value={stats?.totalClasses ?? "-"} />
-        <MetricCard label="Học sinh đang học" value={stats?.activeEnrollments ?? "-"} />
+        <MetricCard label="Phụ huynh"          value={stats?.activeParents ?? "-"} />
       </section>
 
       <section className="section grid three">
@@ -189,6 +193,28 @@ export default function StatisticsPage() {
             <LineChartCard finance={finance} />
           </section>
         </>
+      )}
+
+      {growth.length > 0 && (
+        <section className="section">
+          <Card title="Tăng trưởng học sinh">
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              <button className={`btn btn-sm ${growthPeriod === "day" ? "btn-primary" : "btn-secondary"}`} onClick={() => setGrowthPeriod("day")}>Theo ngày</button>
+              <button className={`btn btn-sm ${growthPeriod === "month" ? "btn-primary" : "btn-secondary"}`} onClick={() => setGrowthPeriod("month")}>Theo tháng</button>
+              <button className={`btn btn-sm ${growthPeriod === "year" ? "btn-primary" : "btn-secondary"}`} onClick={() => setGrowthPeriod("year")}>Theo năm</button>
+            </div>
+            <ResponsiveContainer width="100%" height={240}>
+              <LineChart data={growth}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#667368" }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "#667368" }} tickLine={false} axisLine={false} />
+                <Tooltip formatter={(v, name) => [v, name]} />
+                <Line type="monotone" dataKey="count" name="Tổng học sinh" stroke="#2d6f9f" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="newStudents" name="Học sinh mới" stroke="#1f6f50" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </Card>
+        </section>
       )}
 
       <section className="section grid two">

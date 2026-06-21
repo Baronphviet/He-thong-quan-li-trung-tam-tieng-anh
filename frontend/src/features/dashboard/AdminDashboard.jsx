@@ -88,11 +88,10 @@ export default function AdminDashboard() {
       )}
 
       {/* ── Metric cards ── */}
-      <section className="section grid four">
+      <section className="section grid three">
         <MetricCard label="Học sinh"          value={summary?.activeStudents    ?? "-"} />
         <MetricCard label="Giáo viên"         value={summary?.activeTeachers    ?? "-"} />
         <MetricCard label="Lớp đang mở"       value={summary?.openClasses       ?? "-"} />
-        <MetricCard label="Học sinh tham gia" value={summary?.activeEnrollments ?? "-"} />
       </section>
 
       {/* ── Biểu đồ + tài chính tháng ── */}

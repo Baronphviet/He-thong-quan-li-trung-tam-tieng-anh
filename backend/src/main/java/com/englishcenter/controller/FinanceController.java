@@ -66,6 +66,11 @@ public class FinanceController {
         return service.studentChangeReport();
     }
 
+    @GetMapping("/reports/student-growth")
+    public List<?> studentGrowth(@RequestParam(required = false, defaultValue = "month") String groupBy) {
+        return service.studentGrowthStatistics(groupBy);
+    }
+
     @GetMapping("/reports/students-by-class")
     public List<?> studentsByClass(@RequestParam(required = false) Long classId) {
         return service.studentsByClassReport(classId);

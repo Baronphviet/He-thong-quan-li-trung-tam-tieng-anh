@@ -84,21 +84,22 @@ Hệ thống quản lý trung tâm tiếng Anh hỗ trợ 4 vai trò chính:
 
 ---
 
-## ✅ Trạng Thái Triển Khai (Cập Nhật)
+## ✅ Trạng Thái Triển Khai (Cập Nhật Phiên Bản Mới)
 
-Các chức năng đã có trên giao diện và API:
+Các chức năng đã có trên giao diện và API (Bao gồm các bản cập nhật mới nhất):
 
 | Nhóm | Chức năng | Ghi chú |
 | --- | --- | --- |
 | **Admin** | Quản lý lớp, học sinh, tài khoản, thanh toán | Gán giáo viên vào lớp tại trang Lớp học |
 | **Admin** | **Không điểm danh** | Chỉ giáo viên được phân công mới điểm danh |
-| **Admin** | Trang **Thống kê** (`/admin/statistics`) | Học phí đã thu, lương đã trả, lợi nhuận; số học sinh, giáo viên, lớp, lượt ghi danh |
+| **Admin** | Trang **Thống kê** (`/admin/statistics`) | Hiển thị **số lượng phụ huynh** thay vì học sinh đang học; thống kê học phí, lương, lợi nhuận, quy mô |
 | **Admin** | Trang **Thông báo** (`/admin/announcements`) | Upload banner ảnh (slider) hiển thị trang chủ |
 | **Admin** | Đổi mật khẩu người dùng | Trang Quản lý tài khoản |
 | **Giáo viên** | Điểm danh theo buổi (`/teacher/attendance`) | Chỉ vai trò `TEACHER` |
 | **Học sinh** | Ghi danh lớp mở, xem lịch sử điểm danh | Trang Học sinh |
 | **Phụ huynh** | Banner nhắc học phí chưa đóng | Tự động trên trang Phụ huynh |
 | **Chung** | Trang chủ slider banner | API công khai `/public/announcements/slider` |
+| **Chung** | **Popup Trang Chủ (Mới)** | Hỗ trợ hiển thị tuần tự nhiều Popup, cải thiện giao diện (size lớn hơn) và tính năng "Không hiển thị lại" (lưu qua LocalStorage) |
 | **Chung** | Thông tin cá nhân (`/profile`) | Mọi vai trò đã đăng nhập |
 
 ### Đường dẫn frontend chính

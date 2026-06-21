@@ -7,6 +7,7 @@ import { sameId } from "../utils/auth";
 import { getApiErrorMessage } from "../utils/apiError";
 import { Alert, Button, Loading } from "../components/common";
 import { useNotification } from "../hooks";
+import ClassDetailsModal from "../features/classes/ClassDetailsModal";
 
 export default function StudentDashboardPage() {
   const { role, userId } = useAuth();
@@ -16,6 +17,7 @@ export default function StudentDashboardPage() {
   const [attendanceHistory, setAttendanceHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [joiningClassId, setJoiningClassId] = useState(null);
+  const [detailsClassId, setDetailsClassId] = useState(null);
   const [error, setError] = useState("");
   const { addNotification } = useNotification();
 
@@ -28,11 +30,10 @@ export default function StudentDashboardPage() {
     setError("");
 
     try {
-      const [studentClassData, feeData, openClassData, attendanceData] = await Promise.all([
+      const [studentClassData, feeData, openClassData] = await Promise.all([
         apiGet("/reports/students-by-class"),
         apiGet("/monthly-fees"),
-        classService.getOpen(),
-        role === "STUDENT" ? attendanceService.getStudentHistory(userId) : Promise.resolve([])
+        classService.getOpen()
       ]);
 
       const allEnrollments = Array.isArray(studentClassData) ? studentClassData : [];
@@ -52,7 +53,6 @@ export default function StudentDashboardPage() {
       setOpenClasses(
         (Array.isArray(openClassData) ? openClassData : []).filter((item) => !enrolledClassIds.has(item.id))
       );
-      setAttendanceHistory(Array.isArray(attendanceData) ? attendanceData : []);
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -80,22 +80,15 @@ export default function StudentDashboardPage() {
     }
   }
 
-  const attendanceSummary = useMemo(() => {
-    const present = attendanceHistory.filter((item) => item.status === "PRESENT").length;
-    const absent = attendanceHistory.filter((item) => item.status === "ABSENT").length;
-    const late = attendanceHistory.filter((item) => item.status === "LATE").length;
-    return { present, absent, late };
-  }, [attendanceHistory]);
-
   if (loading) return <Loading />;
 
   return (
     <main>
       <section className="hero">
         <p className="eyebrow">Cổng học sinh</p>
-        <h1>Lớp đang học, đăng ký lớp mới và lịch sử điểm danh</h1>
+        <h1>Lớp đang học và đăng ký lớp mới</h1>
         <p className="lead">
-          Học sinh có thể tham gia lớp đang mở, xem học phí và lịch sử điểm danh.
+          Học sinh có thể tham gia lớp đang mở và xem học phí.
         </p>
       </section>
 
@@ -133,10 +126,10 @@ export default function StudentDashboardPage() {
         <h2>Lớp của học sinh</h2>
         <div className="table-scroll">
           <table>
-            <thead><tr><th>Học sinh</th><th>Lớp</th><th>Trạng thái</th><th>Giảm giá</th></tr></thead>
+            <thead><tr><th>Học sinh</th><th>Lớp</th><th>Trạng thái</th><th>Giảm giá</th><th>Hành động</th></tr></thead>
             <tbody>
               {enrollments.length === 0 && (
-                <tr><td colSpan={4} className="muted">Chưa có lớp đang học.</td></tr>
+                <tr><td colSpan={5} className="muted">Chưa có lớp đang học.</td></tr>
               )}
               {enrollments.map((item) => (
                 <tr key={item.enrollmentId}>
@@ -144,54 +137,17 @@ export default function StudentDashboardPage() {
                   <td>{item.className}</td>
                   <td><span className="status-pill">{item.status}</span></td>
                   <td>{Math.round(Number(item.discountRate || 0) * 100)}%</td>
+                  <td>
+                    <Button variant="secondary" size="sm" type="button" onClick={() => setDetailsClassId(item.classId)}>
+                      Chi tiết
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </section>
-
-      {role === "STUDENT" && (
-        <section className="section grid three">
-          <article className="metric-card">
-            <p className="metric-label">Có mặt</p>
-            <p className="metric-value">{attendanceSummary.present}</p>
-          </article>
-          <article className="metric-card">
-            <p className="metric-label">Vắng</p>
-            <p className="metric-value">{attendanceSummary.absent}</p>
-          </article>
-          <article className="metric-card">
-            <p className="metric-label">Đi muộn</p>
-            <p className="metric-value">{attendanceSummary.late}</p>
-          </article>
-        </section>
-      )}
-
-      {role === "STUDENT" && (
-        <section className="section table-card">
-          <h2>Lịch sử điểm danh</h2>
-          <div className="table-scroll">
-            <table>
-              <thead><tr><th>Lớp</th><th>Buổi</th><th>Ngày</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead>
-              <tbody>
-                {attendanceHistory.length === 0 && (
-                  <tr><td colSpan={5} className="muted">Chưa có dữ liệu điểm danh.</td></tr>
-                )}
-                {attendanceHistory.map((item) => (
-                  <tr key={item.attendanceId}>
-                    <td>{item.className || "-"}</td>
-                    <td>{item.sessionNumber || "-"}</td>
-                    <td>{item.sessionDate || "-"}</td>
-                    <td><span className="status-pill">{item.status}</span></td>
-                    <td>{item.note || "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
 
       <section className="section grid three">
         {fees.length === 0 && <p className="muted">Chưa có hóa đơn học phí.</p>}
@@ -207,6 +163,12 @@ export default function StudentDashboardPage() {
           </article>
         ))}
       </section>
+
+      <ClassDetailsModal
+        isOpen={!!detailsClassId}
+        classId={detailsClassId}
+        onClose={() => setDetailsClassId(null)}
+      />
     </main>
   );
 }

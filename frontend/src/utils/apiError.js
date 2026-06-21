@@ -52,7 +52,7 @@ export function getApiErrorMessage(
   const duplicateMessage = getDuplicateKeyMessage(message);
   if (duplicateMessage) return duplicateMessage;
 
-  return ERROR_MAP[message] || fallback;
+  return ERROR_MAP[message] || message || fallback;
 }
 
 export function parseApiErrorPayload(payload, status) {

@@ -181,11 +181,13 @@ public class AttendanceService {
             row.put("attendanceId", attendance.id);
             row.put("sessionId", attendance.sessionId);
             row.put("studentId", attendance.studentId);
+            row.put("studentName", users.findById(attendance.studentId).map(u -> u.fullName).orElse(null));
             row.put("status", attendance.status);
             row.put("note", attendance.note);
             if (session != null) {
                 row.put("sessionDate", session.sessionDate);
                 row.put("sessionNumber", session.sessionNumber);
+                row.put("sessionTopic", session.note); // Adding sessionTopic here as well, since they might want to use it or not
                 row.put("classId", session.classId);
                 row.put("className", classes.findById(session.classId).map(classEntity -> classEntity.className).orElse(null));
             }

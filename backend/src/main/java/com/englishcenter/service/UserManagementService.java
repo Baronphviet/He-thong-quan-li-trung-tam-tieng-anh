@@ -229,6 +229,7 @@ public class UserManagementService {
         user.active = false;
         users.save(user);
     }
+
     @Transactional
     public void activate(Long id) {
         UserAccount user = users.findById(id)

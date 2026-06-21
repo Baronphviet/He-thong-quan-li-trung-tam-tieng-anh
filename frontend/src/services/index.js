@@ -8,7 +8,7 @@ export const userService = {
   softDelete: (id) => apiDelete(`/users/${id}`),
   changePassword: (id, password) => apiPut(`/users/${id}/password`, { password }),
   getProfile: (id) => apiGet(`/users/${id}/profile`),
-  activate: (id) => apiPatch(`/users/${id}/activate`),
+  activate: (id) => apiPut(`/users/${id}/activate`),
   hardDelete: (id) => apiDelete(`/users/${id}/hard`)
 };
 
@@ -63,6 +63,7 @@ export const paymentService = {
 
 export const announcementService = {
   getAll: () => apiGet("/announcements"),
+  getPublic: () => apiGet("/public/announcements"),
   getSlider: () => apiGet("/public/announcements/slider"),
   getById: (id) => apiGet(`/announcements/${id}`),
   create: (data) => apiPost("/announcements", data),
@@ -93,7 +94,8 @@ export const dashboardService = {
   getStudentsByClass: () => apiGet("/reports/students-by-class"),
   getFinanceReport: () => apiGet("/reports/finance-monthly"),
   getFinanceProfit: () => apiGet("/reports/finance-profit"),
-  getStudentChangeReport: () => apiGet("/reports/student-change")
+  getStudentChangeReport: () => apiGet("/reports/student-change"),
+  getStudentGrowth: (groupBy) => apiGet(`/reports/student-growth?groupBy=${groupBy || 'month'}`)
 };
 
 export const attendanceService = {

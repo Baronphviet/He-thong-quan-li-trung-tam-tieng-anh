@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Button, Card, Input, Loading, Modal, Select, Table } from "../../components/common";
 import { adminService, parentService, studentService, teacherService, userService } from "../../services";
+import { useAuth } from "../../store";
 import { useNotification } from "../../hooks";
 import { getApiErrorMessage } from "../../utils/apiError.js";
 
@@ -108,6 +109,7 @@ function InlineConfirm({ message, note, confirmLabel, onConfirm, onCancel, loadi
    MODAL QUẢN LÝ TÀI KHOẢN (gộp tất cả)
 ═══════════════════════════════════════════ */
 function AccountManageModal({ account, onClose, onRefresh, addNotification, students, parents }) {
+  const { userId } = useAuth();
   const [tab, setTab] = useState("info");
   const [newPassword, setNewPassword] = useState("");
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
@@ -230,10 +232,12 @@ function AccountManageModal({ account, onClose, onRefresh, addNotification, stud
                         <button
                             className="btn btn-secondary btn-sm"
                             type="button"
+                            disabled={account.id === userId && account.role === "ADMIN"}
                             onClick={() =>
                                 setConfirm(confirm === "deactivate" ? null : "deactivate")
                             }
-                            style={{ color: "#a84132" }}
+                            style={{ color: account.id === userId && account.role === "ADMIN" ? "#ccc" : "#a84132" }}
+                            title={account.id === userId && account.role === "ADMIN" ? "Không thể tự vô hiệu hóa tài khoản của chính mình" : ""}
                         >
                           Vô hiệu hoá
                         </button>

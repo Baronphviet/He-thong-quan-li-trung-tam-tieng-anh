@@ -70,7 +70,7 @@ export default function ClassDetailsModal({ classId, isOpen, onClose }) {
                         <td>{student.phone || "-"}</td>
                         <td>
                           {student.unpaidFeeCount > 0 ? (
-                            <span style={{ color: "red", fontWeight: "bold" }}>Nợ {student.unpaidFeeCount} tháng</span>
+                            <span style={{ color: "red", fontWeight: "bold" }}>Còn nợ {student.unpaidAmount?.toLocaleString("vi-VN")} ₫</span>
                           ) : (
                             <span style={{ color: "green" }}>Đã đóng đủ</span>
                           )}

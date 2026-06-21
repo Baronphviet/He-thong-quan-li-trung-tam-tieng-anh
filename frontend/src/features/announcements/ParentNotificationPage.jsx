@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button, Input, Select, Textarea } from "../../components/common";
+import { apiPost } from "../../services/apiClient";
 import { useNotification } from "../../hooks";
 import { classService } from "../../services"; // chỉnh đúng path/service thật của bạn
 
@@ -16,7 +17,7 @@ export default function ParentNotificationPage() {
     absentCount: "0",
     unpaidAmount: "0",
     classId: "",
-    emergencyPhone: "",
+    subject: "",
     content: ""
   });
 
@@ -73,20 +74,17 @@ export default function ParentNotificationPage() {
           <p>Kính gửi Quý phụ huynh lớp <strong>${className}</strong>,</p>
           <p>${formData.content || "Trung tâm xin thông báo lịch nghỉ học cụ thể của lớp đã được cập nhật. Chi tiết vui lòng xem lại thời khóa biểu."}</p>
         `;
-      } else if (notifyType === "EMERGENCY_SMS") {
-        payload.phone = formData.emergencyPhone;
-        payload.smsContent = formData.content;
+      } else if (notifyType === "CUSTOM_EMAIL") {
+        payload.emails = formData.parentEmail.split(",").map(email => email.trim());
+        payload.subject = formData.subject || "[English Center] Thông báo người dùng";
+        payload.content = `
+          <h3>Thông báo từ trung tâm English Center</h3>
+          <p>${formData.content.replace(/\n/g, '<br/>')}</p>
+        `;
       }
 
-      const response = await fetch("http://localhost:8080/api/admin/email/send-parent-notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) throw new Error("Gửi thông báo không thành công");
-
-      const result = await response.json();
-      const message = result.message || "Đã xử lý gửi thông báo.";
+      const result = await apiPost("/admin/email/send-parent-notify", payload);
+      const message = result?.message || "Đã xử lý gửi thông báo.";
 
       // Phát hiện trường hợp 0 người nhận dựa theo nội dung message backend trả về
       const isEmpty = /\b0\s*(phụ huynh|học sinh|người)\b/i.test(message)
@@ -107,8 +105,8 @@ export default function ParentNotificationPage() {
   return (
       <main style={{ padding: '20px' }}>
         <section className="hero compact-hero">
-          <h1>Gửi thông báo cho phụ huynh</h1>
-        </section>
+        <h1>Gửi thông báo cho phụ huynh</h1>
+      </section>
 
         <section className="notification-card">
           <form onSubmit={handleSendNotification}>
@@ -122,7 +120,7 @@ export default function ParentNotificationPage() {
                 options={[
                   { value: "DEBT_ABSENT", label: "Thông báo vắng học & Công nợ (Học phí)" },
                   { value: "CLASS_OFF", label: "Thông báo nghỉ học theo Lớp" },
-                  { value: "EMERGENCY_SMS", label: "Tin nhắn điện thoại Khẩn cấp" }
+                  { value: "CUSTOM_EMAIL", label: "Thông báo người dùng qua email" }
                 ]}
             />
 
@@ -183,18 +181,24 @@ export default function ParentNotificationPage() {
                 </>
             )}
 
-            {notifyType === "EMERGENCY_SMS" && (
+            {notifyType === "CUSTOM_EMAIL" && (
                 <>
                   <Input
-                      id="emergencyPhone" name="emergencyPhone"
-                      label="Số điện thoại phụ huynh nhận tin khẩn"
-                      placeholder="Ví dụ: 0912345678"
-                      value={formData.emergencyPhone} onChange={handleInputChange} required
+                      id="parentEmail" name="parentEmail"
+                      label="Email người nhận (Nhập nhiều email cách nhau bằng dấu phẩy ',')"
+                      placeholder="email1@gmail.com, email2@gmail.com"
+                      value={formData.parentEmail} onChange={handleInputChange} required
+                  />
+                  <Input
+                      id="subject" name="subject"
+                      label="Tiêu đề thông báo"
+                      placeholder="Nhập tiêu đề thông báo..."
+                      value={formData.subject} onChange={handleInputChange} required
                   />
                   <Textarea
                       id="content" name="content"
-                      label="Nội dung tin nhắn khẩn (Nên viết ngắn gọn dưới 160 ký tự không dấu)"
-                      placeholder="Ví dụ: Thong bao khan: Trung tam nghi hoc ngay hom nay do su co mat dien đột xuat..."
+                      label="Nội dung thông báo"
+                      placeholder="Nhập nội dung email..."
                       value={formData.content} onChange={handleInputChange} required
                   />
                 </>
