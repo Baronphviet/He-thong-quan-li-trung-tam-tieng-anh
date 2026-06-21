@@ -90,16 +90,18 @@ Các chức năng đã có trên giao diện và API (Bao gồm các bản cập
 
 | Nhóm | Chức năng | Ghi chú |
 | --- | --- | --- |
-| **Admin** | Quản lý lớp, học sinh, tài khoản, thanh toán | Gán giáo viên vào lớp tại trang Lớp học |
+| **Admin** | Quản lý lớp, học sinh, tài khoản, thanh toán | Gán giáo viên vào lớp tại trang Lớp học, xem chi tiết lớp học (ClassDetailsModal) |
+| **Admin** | **Thanh toán lương giáo viên** | Tính lương tự động theo buổi dạy, giao diện thanh toán lương (`/admin/teacher-salary`) |
+| **Admin** | **Gửi email thông báo** | Tự động gửi thông tin tài khoản khi tạo mới, gửi email nhắc học phí cho phụ huynh |
 | **Admin** | **Không điểm danh** | Chỉ giáo viên được phân công mới điểm danh |
-| **Admin** | Trang **Thống kê** (`/admin/statistics`) | Hiển thị **số lượng phụ huynh** thay vì học sinh đang học; thống kê học phí, lương, lợi nhuận, quy mô |
-| **Admin** | Trang **Thông báo** (`/admin/announcements`) | Upload banner ảnh (slider) hiển thị trang chủ |
+| **Admin** | Trang **Thống kê** (`/admin/statistics`) | Hiển thị **Phụ huynh** thay vì học sinh đang học; thống kê học phí, lương, lợi nhuận, quy mô |
+| **Admin** | Trang **Thông báo** (`/admin/announcements`) | Upload banner ảnh (slider) hiển thị trang chủ, tính năng quản lý thông báo phụ huynh |
 | **Admin** | Đổi mật khẩu người dùng | Trang Quản lý tài khoản |
 | **Giáo viên** | Điểm danh theo buổi (`/teacher/attendance`) | Chỉ vai trò `TEACHER` |
-| **Học sinh** | Ghi danh lớp mở, xem lịch sử điểm danh | Trang Học sinh |
-| **Phụ huynh** | Banner nhắc học phí chưa đóng | Tự động trên trang Phụ huynh |
+| **Học sinh** | Ghi danh lớp mở, xem lịch sử điểm danh | Xem chi tiết lịch sử điểm danh từng môn học (`/attendance-history`) |
+| **Phụ huynh** | Banner nhắc học phí chưa đóng | Tự động trên trang Phụ huynh, tính hạn đóng học phí là ngày cuối cùng của tháng nhập học |
 | **Chung** | Trang chủ slider banner | API công khai `/public/announcements/slider` |
-| **Chung** | **Popup Trang Chủ (Mới)** | Hỗ trợ hiển thị tuần tự nhiều Popup, cải thiện giao diện (size lớn hơn) và tính năng "Không hiển thị lại" (lưu qua LocalStorage) |
+| **Chung** | **Popup Trang Chủ (Mới)** | Hỗ trợ hiển thị tuần tự nhiều Popup, cải thiện giao diện và lưu trạng thái qua Storage |
 | **Chung** | Thông tin cá nhân (`/profile`) | Mọi vai trò đã đăng nhập |
 
 ### Đường dẫn frontend chính
@@ -110,17 +112,16 @@ Các chức năng đã có trên giao diện và API (Bao gồm các bản cập
 | `/login` | Đăng nhập |
 | `/profile` | Tất cả vai trò |
 | `/admin`, `/admin/classes`, `/admin/students`, `/admin/accounts`, `/admin/payments` | Admin |
-| `/admin/statistics`, `/admin/announcements` | Admin |
+| `/admin/statistics`, `/admin/announcements`, `/admin/teacher-salary` | Admin |
 | `/teacher`, `/teacher/attendance` | Giáo viên |
-| `/student` | Học sinh |
+| `/student`, `/attendance-history` | Học sinh |
 | `/parent` | Phụ huynh |
 
 ### Chưa triển khai / đang mở rộng
 
-- Gửi thông báo hàng loạt qua Zalo/Facebook/SMS (UC-A11)
+- Gửi thông báo hàng loạt qua Zalo/Facebook/SMS (UC-A11) - Đã có hỗ trợ gửi qua Email
 - Báo cáo biến động học sinh theo tháng (UC-A08)
 - Cấu hình ẩn/hiện tên giáo viên cho phụ huynh (UC-A10)
-- Thanh toán lương giáo viên trên giao diện admin (API thống kê đã có)
 - Đổi mật khẩu tự phục vụ trên trang Hồ sơ (admin đổi giúp qua Quản lý tài khoản)
 - Bộ test tự động backend/frontend
 
