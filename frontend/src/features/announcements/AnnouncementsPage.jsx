@@ -149,7 +149,6 @@ export default function AnnouncementsPage() {
   return (
     <main>
       <section className="hero compact-hero">
-        <p className="eyebrow">📢 Quảng cáo & thông báo</p>
         <h1> Quản lý banner trang chủ</h1>
         <Button type="button" onClick={openCreate}>Thêm banner</Button>
       </section>

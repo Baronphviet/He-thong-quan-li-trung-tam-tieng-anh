@@ -229,6 +229,29 @@ public class UserManagementService {
         user.active = false;
         users.save(user);
     }
+    @Transactional
+    public void activate(Long id) {
+        UserAccount user = users.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found: " + id));
+        user.active = true;
+        users.save(user);
+    }
+
+    @Transactional
+    public void hardDelete(Long id) {
+        if (!users.existsById(id)) {
+            throw new NotFoundException("User not found: " + id);
+        }
+        // Xoá liên kết phụ huynh-học sinh trước (nếu có)
+        studentParents.deleteByIdStudentId(id);
+        studentParents.deleteByIdParentId(id);
+        // Xoá profile theo role
+        teachers.deleteById(id);
+        students.deleteById(id);
+        parents.deleteById(id);
+        // Xoá user
+        users.deleteById(id);
+    }
 
     @Transactional
     public void linkParent(LinkParentRequest request) {

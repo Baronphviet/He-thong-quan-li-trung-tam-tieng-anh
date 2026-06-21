@@ -164,7 +164,6 @@ export default function StudentsPage() {
   return (
     <main>
       <section className="hero compact-hero">
-        <p className="eyebrow"> 🎒 Quản lý học sinh</p>
         <h1>Danh sách học sinh</h1>
         <Button type="button" onClick={handleAddNew}>Thêm học sinh</Button>
       </section>

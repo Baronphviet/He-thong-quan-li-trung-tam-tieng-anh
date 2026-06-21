@@ -160,7 +160,6 @@ export default function StatisticsPage() {
   return (
     <main>
       <section className="hero compact-hero">
-        <p className="eyebrow">📊 Thống kê tài chính</p>
         <h1>Báo cáo thu chi và vận hành</h1>
         <p className="lead">Theo dõi học phí đã thu, lương đã trả, lợi nhuận và quy mô trung tâm.</p>
       </section>

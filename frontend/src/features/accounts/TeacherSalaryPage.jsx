@@ -96,7 +96,6 @@ export default function TeacherSalaryPage() {
   return (
     <main>
       <section className="hero compact-hero">
-        <p className="eyebrow">Quản lý lương</p>
         <h1>Bảng lương giáo viên</h1>
       </section>
 

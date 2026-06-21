@@ -96,3 +96,9 @@ export function apiDelete(path) {
     method: "DELETE"
   });
 }
+export function apiPatch(path, body) {
+  return apiFetch(path, {
+    method: "PATCH",
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {})
+  });
+}

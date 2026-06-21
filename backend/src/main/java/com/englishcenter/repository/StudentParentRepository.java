@@ -18,10 +18,20 @@ public interface StudentParentRepository extends JpaRepository<StudentParent, St
     // ==========================================================================================
     // CẬP NHẬT: Lấy cả Email phụ huynh và Tên học sinh (Trả về danh sách mảng Object)
     // ==========================================================================================
-    @Query(value = "SELECT p.email, s.full_name FROM student_parent sp " +
-                   "JOIN parent_profile p ON sp.parent_id = p.id " +
-                   "JOIN student_profile s ON sp.student_id = s.id " +
-                   "WHERE s.class_id = :classId AND p.email IS NOT NULL", 
-           nativeQuery = true)
+    // ==========================================================================================
+    // CẬP NHẬT: Lấy cả Email phụ huynh và Tên học sinh (Trả về danh sách mảng Object)
+    // ==========================================================================================
+    @Query(value = "SELECT pu.email, su.full_name " +
+            "FROM student_parent sp " +
+            "JOIN users pu ON sp.parent_id = pu.user_id " +
+            "JOIN users su ON sp.student_id = su.user_id " +
+            "JOIN enrollment e ON sp.student_id = e.student_id " +
+            "WHERE e.class_id = :classId " +
+            "  AND e.status = 'ACTIVE' " +
+            "  AND pu.email IS NOT NULL",
+            nativeQuery = true)
+    // TRẢ LẠI THÀNH STRING: Java không báo lỗi incompatible types nữa, MySQL sẽ tự ép kiểu
     List<Object[]> findParentEmailsAndStudentNamesByClassId(@Param("classId") String classId);
+    void deleteByIdStudentId(Long studentId);
+    void deleteByIdParentId(Long parentId);
 }

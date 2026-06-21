@@ -9,16 +9,6 @@ import { Alert, Card, Loading } from "../../components/common";
 import { getApiErrorMessage } from "../../utils/apiError";
 import { formatMoney } from "../../utils/format";
 
-const QUICK_LINKS = [
-  { to: "/admin/accounts",      icon: "👤", label: "Tài khoản người dùng" },
-  { to: "/admin/master-data",   icon: "📁", label: "Dữ liệu danh mục" },
-  { to: "/classes",             icon: "🏫", label: "Lớp học" },
-  { to: "/admin/students",      icon: "🎒", label: "Học sinh" },
-  { to: "/admin/payments",      icon: "💳", label: "Ghi nhận thanh toán" },
-  { to: "/admin/teacher-salary",icon: "💰", label: "Lương giáo viên" },
-  { to: "/admin/statistics",    icon: "📊", label: "Thống kê tài chính" },
-  { to: "/admin/announcements", icon: "📢", label: "Banner thông báo" },
-];
 
 function MetricCard({ label, value }) {
   return (
@@ -87,7 +77,6 @@ export default function AdminDashboard() {
   return (
     <main>
       <section className="hero compact-hero">
-        <p className="eyebrow">Bảng điều khiển</p>
         <h1>Tổng quan quản trị</h1>
         <p className="lead">
           Quản lý lớp, tài khoản, học phí và gán giáo viên. Điểm danh do giáo viên thực hiện.
@@ -143,40 +132,6 @@ export default function AdminDashboard() {
                   {value != null ? formatMoney(value) : "-"}
                 </span>
               </div>
-            ))}
-          </div>
-        </Card>
-      </section>
-
-      {/* ── Quản lý nhanh ── */}
-      <section className="section">
-        <Card title="Quản lý nhanh">
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginTop: 4 }}>
-            {QUICK_LINKS.map(({ to, icon, label }) => (
-              <Link
-                key={to}
-                to={to}
-                style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  padding: "12px 14px", borderRadius: 14,
-                  border: "1px solid var(--line)", background: "#fffdf6",
-                  color: "var(--ink)", fontWeight: 700, fontSize: "0.88rem",
-                  transition: "all 0.18s ease", textDecoration: "none",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(31,111,80,0.07)";
-                  e.currentTarget.style.borderColor = "var(--brand)";
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#fffdf6";
-                  e.currentTarget.style.borderColor = "var(--line)";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }}
-              >
-                <span style={{ fontSize: "1.2rem" }}>{icon}</span>
-                <span>{label}</span>
-              </Link>
             ))}
           </div>
         </Card>

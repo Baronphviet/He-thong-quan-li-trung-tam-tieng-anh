@@ -41,7 +41,6 @@ export default function ProfilePage() {
   return (
     <main>
       <section className="hero compact-hero">
-        <p className="eyebrow">Thông tin cá nhân</p>
         <h1>Hồ sơ của bạn</h1>
         <p className="lead">Xem thông tin tài khoản và dữ liệu liên quan đến vai trò {roleLabels[role] || role}.</p>
       </section>

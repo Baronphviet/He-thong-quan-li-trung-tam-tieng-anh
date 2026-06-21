@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut, apiDelete } from "./apiClient";
+import {apiGet, apiPost, apiPut, apiDelete, apiFetch, apiPatch} from "./apiClient";
 
 export const authService = {
   login: (credentials) => apiPost("/auth/login", credentials)
@@ -7,7 +7,9 @@ export const authService = {
 export const userService = {
   softDelete: (id) => apiDelete(`/users/${id}`),
   changePassword: (id, password) => apiPut(`/users/${id}/password`, { password }),
-  getProfile: (id) => apiGet(`/users/${id}/profile`)
+  getProfile: (id) => apiGet(`/users/${id}/profile`),
+  activate: (id) => apiPatch(`/users/${id}/activate`),
+  hardDelete: (id) => apiDelete(`/users/${id}/hard`)
 };
 
 export const adminService = {

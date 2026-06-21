@@ -10,8 +10,10 @@ import com.englishcenter.service.UserManagementService.TeacherRequest;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -29,6 +31,7 @@ public class UserController {
         this.service = service;
     }
 
+    // ── Admins ──────────────────────────────────────────
     @GetMapping("/admins")
     public List<Map<String, Object>> admins() {
         return service.listAdmins();
@@ -44,6 +47,7 @@ public class UserController {
         return service.updateAdmin(id, request);
     }
 
+    // ── Teachers ─────────────────────────────────────────
     @GetMapping("/teachers")
     public List<Map<String, Object>> teachers() {
         return service.listTeachers();
@@ -59,6 +63,7 @@ public class UserController {
         return service.updateTeacher(id, request);
     }
 
+    // ── Students ─────────────────────────────────────────
     @GetMapping("/students")
     public List<Map<String, Object>> students() {
         return service.listStudents();
@@ -74,6 +79,7 @@ public class UserController {
         return service.updateStudent(id, request);
     }
 
+    // ── Parents ──────────────────────────────────────────
     @GetMapping("/parents")
     public List<Map<String, Object>> parents() {
         return service.listParents();
@@ -95,19 +101,33 @@ public class UserController {
         service.linkParent(request);
     }
 
+    // ── Users (chung) ────────────────────────────────────
     @GetMapping("/users/{id}/profile")
     public Map<String, Object> profile(@PathVariable Long id) {
         return service.getProfile(id);
     }
 
-    @PutMapping("/users/{id}/password")
-    public Map<String, Object> changePassword(@PathVariable Long id, @RequestBody ChangePasswordRequest request) {
-        return service.changePassword(id, request);
+    @PatchMapping("/users/{id}/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(@PathVariable Long id, @RequestBody ChangePasswordRequest request) {
+        service.changePassword(id, request);
     }
 
     @DeleteMapping("/users/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void softDelete(@PathVariable Long id) {
         service.softDelete(id);
+    }
+
+    @PatchMapping("/users/{id}/activate")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void activate(@PathVariable Long id) {
+        service.activate(id);
+    }
+
+    @DeleteMapping("/users/{id}/hard")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void hardDelete(@PathVariable Long id) {
+        service.hardDelete(id);
     }
 }
