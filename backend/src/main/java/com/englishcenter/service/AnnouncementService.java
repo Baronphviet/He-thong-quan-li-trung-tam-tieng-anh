@@ -27,8 +27,7 @@ public class AnnouncementService {
             LocalDate startDate,
             LocalDate endDate,
             Boolean active,
-            Long createdBy
-    ) {
+            Long createdBy) {
     }
 
     public List<Announcement> listAll() {
@@ -48,8 +47,9 @@ public class AnnouncementService {
 
     @Transactional
     public Announcement save(Long id, AnnouncementRequest request) {
-        Announcement announcement = id == null ? new Announcement() : announcements.findById(id)
-                .orElseThrow(() -> new NotFoundException("Announcement not found: " + id));
+        Announcement announcement = id == null ? new Announcement()
+                : announcements.findById(id)
+                        .orElseThrow(() -> new NotFoundException("Announcement not found: " + id));
         if (isBlank(request.title())) {
             throw new IllegalArgumentException("title is required");
         }
@@ -57,13 +57,33 @@ public class AnnouncementService {
         if (!users.existsById(createdBy)) {
             throw new NotFoundException("Creator not found: " + createdBy);
         }
+
         announcement.title = request.title().trim();
         announcement.content = request.content();
         announcement.imageUrl = request.imageUrl();
         announcement.type = isBlank(request.type()) ? "BANNER" : request.type();
         announcement.startDate = request.startDate();
         announcement.endDate = request.endDate();
-        announcement.active = request.active() != null && request.active();
+
+        // ── XÓA DÒNG CŨ: announcement.active = request.active() != null &&
+        // request.active(); ──
+        // ── THAY BẰNG LÒGIC MỚI DƯỚI ĐÂY
+        // ──────────────────────────────────────────────────
+        if (id != null && !announcement.active && (request.active() == null || request.active())) {
+            // Nếu là cập nhật (id != null) VÀ banner cũ đang tắt (INACTIVE)
+            // VÀ request gửi lên muốn bật lại (active = true hoặc không truyền lên)
+            announcement.active = true;
+
+            // ĐỒNG THỜI: Reset hoặc gia hạn ngày kết thúc nếu ngày cũ đã bị quá hạn (Past
+            // Date)
+            if (announcement.endDate != null && announcement.endDate.isBefore(LocalDate.now())) {
+                announcement.endDate = LocalDate.now().plusDays(7); // Tự động gia hạn thêm 7 ngày hoặc chỉnh tùy ý bạn
+            }
+        } else {
+            // Các trường hợp tạo mới hoặc cập nhật thông thường khác
+            announcement.active = request.active() != null ? request.active() : true;
+        }
+
         announcement.createdBy = createdBy;
         return announcements.save(announcement);
     }

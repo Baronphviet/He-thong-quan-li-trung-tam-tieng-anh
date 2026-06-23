@@ -106,7 +106,8 @@ export default function AnnouncementsPage() {
       type: item.type || "SLIDER",
       startDate: item.startDate || "",
       endDate: item.endDate || "",
-      active: item.active !== false
+      // SỬA TẠI ĐÂY: Luôn bật active lên true khi mở form sửa để kích hoạt lại banner
+      active: true
     });
     setModalOpen(true);
   };
@@ -124,7 +125,7 @@ export default function AnnouncementsPage() {
   const columns = [
     { key: "title", label: "Tiêu đề" },
     { key: "type", label: "Loại" },
-    { key: "active", label: "Trạng thái", render: (value) => ( <span className={`status-pill ${!value ? "danger" : ""}`}> {value ? "ACTIVE" : "INACTIVE"} </span> ) },
+    { key: "active", label: "Trạng thái", render: (value) => (<span className={`status-pill ${!value ? "danger" : ""}`}> {value ? "ACTIVE" : "INACTIVE"} </span>) },
     {
       key: "imageUrl",
       label: "Ảnh",

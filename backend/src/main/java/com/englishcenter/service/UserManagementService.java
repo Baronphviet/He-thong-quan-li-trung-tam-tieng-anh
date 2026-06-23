@@ -347,29 +347,52 @@ public class UserManagementService {
         map.put("dateOfBirth", profile == null ? null : profile.dateOfBirth);
         map.put("address", profile == null ? null : profile.address);
         map.put("enrollDate", profile == null ? null : profile.enrollDate);
+        List<String> parentDetails = studentParents.findByIdStudentId(user.id).stream()
+                .map(link -> {
+                    Long parentId = link.id.parentId;
+                    // Tìm thông tin tài khoản của phụ huynh trong bảng UserAccount để lấy Họ tên và
+                    // Username
+                    return users.findById(parentId)
+                            .map(u -> u.fullName + " (" + u.username + ")")
+                            .orElse("Không rõ");
+                })
+                .toList();
+        map.put("parentName", parentDetails.isEmpty() ? null : String.join(", ", parentDetails));
+
         return map;
     }
 
-private Map<String, Object> parentMap(UserAccount user) {
+   private Map<String, Object> parentMap(UserAccount user) {
     ParentProfile profile = parents.findById(user.id).orElse(null);
     Map<String, Object> map = baseMap(user);
     map.put("zaloId", profile == null ? null : profile.zaloId);
     map.put("facebookId", profile == null ? null : profile.facebookId);
     map.put("relationship", profile == null ? null : profile.relationship);
     
-    // ── CẬP NHẬT ĐOẠN NÀY ĐỂ LẤY TÊN THAY VÌ ID ─────────────────────────
-    List<String> studentNames = studentParents.findByIdParentId(user.id).stream()
+    // 1. Lấy danh sách thông tin chi tiết "Tên (username)"
+    List<String> studentDetails = studentParents.findByIdParentId(user.id).stream()
         .map(link -> {
             Long studentId = link.id.studentId;
             return users.findById(studentId)
-                    .map(u -> u.fullName) // Hãy chắc chắn u.fullName trùng với trường họ tên trong UserAccount
+                    .map(u -> u.fullName + " (" + u.username + ")")
+                    .orElse("Không rõ");
+        })
+        .toList();
+
+    // 2. Lấy danh sách CHỈ GỒM TÊN (Dành cho các màn hình cũ dùng mảng studentNames)
+    List<String> studentNamesOnly = studentParents.findByIdParentId(user.id).stream()
+        .map(link -> {
+            Long studentId = link.id.studentId;
+            return users.findById(studentId)
+                    .map(u -> u.fullName)
                     .orElse("Học sinh không tồn tại");
         })
         .toList();
         
-    // Đẩy mảng tên học sinh vào map với key mới là "studentNames"
-    map.put("studentNames", studentNames);
-    
+    // 3. Đẩy đồng thời cả 2 key vào Map để cứu tất cả các màn hình Frontend
+    map.put("studentName", studentDetails.isEmpty() ? null : String.join(", ", studentDetails)); // Phục vụ Modal Admin
+    map.put("studentNames", studentNamesOnly); // Phục vụ màn hình "Thông tin sửa chữa sung" của bạn
+
     return map;
 }
 
