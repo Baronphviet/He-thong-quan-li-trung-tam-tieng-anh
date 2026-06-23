@@ -369,6 +369,11 @@ public class UserManagementService {
     map.put("facebookId", profile == null ? null : profile.facebookId);
     map.put("relationship", profile == null ? null : profile.relationship);
     
+    // Đã thêm: Lấy danh sách ID học sinh để truyền về cho Frontend gọi API Tổng quan/Điểm danh
+    List<Long> studentIds = studentParents.findByIdParentId(user.id).stream()
+        .map(link -> link.id.studentId)
+        .toList();
+
     // 1. Lấy danh sách thông tin chi tiết "Tên (username)"
     List<String> studentDetails = studentParents.findByIdParentId(user.id).stream()
         .map(link -> {
@@ -379,7 +384,7 @@ public class UserManagementService {
         })
         .toList();
 
-    // 2. Lấy danh sách CHỈ GỒM TÊN (Dành cho các màn hình cũ dùng mảng studentNames)
+    // 2. Lấy danh sách CHỈ GỒM TÊN
     List<String> studentNamesOnly = studentParents.findByIdParentId(user.id).stream()
         .map(link -> {
             Long studentId = link.id.studentId;
@@ -389,9 +394,11 @@ public class UserManagementService {
         })
         .toList();
         
-    // 3. Đẩy đồng thời cả 2 key vào Map để cứu tất cả các màn hình Frontend
-    map.put("studentName", studentDetails.isEmpty() ? null : String.join(", ", studentDetails)); // Phục vụ Modal Admin
-    map.put("studentNames", studentNamesOnly); // Phục vụ màn hình "Thông tin sửa chữa sung" của bạn
+    // 3. Đẩy tất cả dữ liệu vào Map
+    map.put("studentIds", studentIds); // Đã thêm: Giúp Frontend biết ID nào để gọi API điểm danh/học phí
+    map.put("studentId", studentIds.isEmpty() ? null : studentIds.get(0)); // Phục vụ trường hợp hệ thống cũ chỉ đọc 1 ID đơn lẻ
+    map.put("studentName", studentDetails.isEmpty() ? null : String.join(", ", studentDetails)); 
+    map.put("studentNames", studentNamesOnly); 
 
     return map;
 }
