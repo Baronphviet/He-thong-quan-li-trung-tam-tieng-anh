@@ -124,7 +124,7 @@ export default function AnnouncementsPage() {
   const columns = [
     { key: "title", label: "Tiêu đề" },
     { key: "type", label: "Loại" },
-    { key: "active", label: "Trạng thái", render: (value) => <span className="status-pill">{value ? "ACTIVE" : "INACTIVE"}</span> },
+    { key: "active", label: "Trạng thái", render: (value) => ( <span className={`status-pill ${!value ? "danger" : ""}`}> {value ? "ACTIVE" : "INACTIVE"} </span> ) },
     {
       key: "imageUrl",
       label: "Ảnh",

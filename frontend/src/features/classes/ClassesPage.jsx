@@ -137,7 +137,8 @@ export default function ClassesPage() {
     { key: "teacherName", label: "Giáo viên", render: (value) => value || "-" },
     { key: "schedule", label: "Lịch học" },
     { key: "tuitionFee", label: "Học phí", render: (value) => formatMoney(value) },
-    { key: "status", label: "Trạng thái", render: (value) => <span className="status-pill">{value}</span> },
+    // Tìm đến dòng cấu hình "status" cũ và thay bằng dòng này:
+    { key: "status", label: "Trạng thái", render: (value) => ( <span className={`status-pill ${value === "CLOSED" ? "danger" : ""}`}> {value} </span>) },
     { key: "createdAt", label: "Ngày tạo", render: (value) => value ? new Date(value).toLocaleDateString("vi-VN") : "-" },
     {
       key: "actions",
