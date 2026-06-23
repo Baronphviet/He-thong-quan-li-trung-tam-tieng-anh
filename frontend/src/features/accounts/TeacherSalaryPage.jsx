@@ -90,7 +90,7 @@ export default function TeacherSalaryPage() {
     { key: "salaryRate", label: "Lương cơ bản", render: (value) => formatMoney(value) },
     { key: "totalSessions", label: "Số buổi dạy" },
     { key: "amount", label: "Thực lĩnh", render: (value) => formatMoney(value) },
-    { key: "status", label: "Trạng thái", render: (value) => <span className={`status-pill ${value === "PENDING" ? "danger" : "success"}`}>{value === "PENDING" ? "Chưa thanh toán" : "Đã thanh toán"}</span> },
+    { key: "status", label: "Trạng thái", render: (value) => <span className={`status-pill ${value === "PENDING" ? "danger" : "success"}`}>{value === "PENDING" ? "UNPAID" : "PAID"}</span> },
     { key: "paidDate", label: "Ngày trả", render: (value) => value ? new Date(value).toLocaleDateString("vi-VN") : "-" },
     {
       key: "actions",

@@ -73,7 +73,7 @@ export default function ParentDashboardPage() {
         <section className="section tuition-alerts">
           {tuitionAlerts.map((fee) => (
             <Alert key={fee.id} type="warning" title={`Nhắc đóng học phí - ${fee.studentName}`}>
-              Học sinh <strong>{fee.studentName}</strong> lớp <strong>{fee.className}</strong> kỳ {fee.month}/{fee.year}
+              Học sinh <strong>{fee.studentName}</strong> lớp <strong>{fee.className}</strong> kỳ {fee.month}/{fee.year} <strong/>
               còn nợ <strong>{formatMoney(fee.outstandingAmount)}</strong>. Hạn đóng: {fee.dueDate || "theo quy định trung tâm"}.
             </Alert>
           ))}
