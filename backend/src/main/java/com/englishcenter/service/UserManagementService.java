@@ -33,8 +33,7 @@ public class UserManagementService {
             TeacherRepository teachers,
             StudentRepository students,
             ParentRepository parents,
-            StudentParentRepository studentParents
-    ) {
+            StudentParentRepository studentParents) {
         this.users = users;
         this.teachers = teachers;
         this.students = students;
@@ -52,8 +51,7 @@ public class UserManagementService {
             String degree,
             String specialization,
             BigDecimal salaryRate,
-            LocalDate joinDate
-    ) {
+            LocalDate joinDate) {
     }
 
     public record StudentRequest(
@@ -65,8 +63,7 @@ public class UserManagementService {
             Boolean active,
             LocalDate dateOfBirth,
             String address,
-            LocalDate enrollDate
-    ) {
+            LocalDate enrollDate) {
     }
 
     public record ParentRequest(
@@ -78,8 +75,7 @@ public class UserManagementService {
             Boolean active,
             String zaloId,
             String facebookId,
-            String relationship
-    ) {
+            String relationship) {
     }
 
     public record LinkParentRequest(Long studentId, Long parentId) {
@@ -91,8 +87,7 @@ public class UserManagementService {
             String fullName,
             String email,
             String phone,
-            Boolean active
-    ) {
+            Boolean active) {
     }
 
     public record ChangePasswordRequest(String password) {
@@ -126,20 +121,23 @@ public class UserManagementService {
 
     @Transactional
     public Map<String, Object> createAdmin(AdminRequest request) {
-        UserAccount user = createBaseUser(request.username(), request.password(), request.fullName(), request.email(), request.phone(), "ADMIN", request.active());
+        UserAccount user = createBaseUser(request.username(), request.password(), request.fullName(), request.email(),
+                request.phone(), "ADMIN", request.active());
         return baseMap(user);
     }
 
     @Transactional
     public Map<String, Object> updateAdmin(Long id, AdminRequest request) {
         UserAccount user = requireUser(id, "ADMIN");
-        updateBaseUser(user, request.fullName(), request.email(), request.phone(), request.active(), request.password());
+        updateBaseUser(user, request.fullName(), request.email(), request.phone(), request.active(),
+                request.password());
         return baseMap(user);
     }
 
     @Transactional
     public Map<String, Object> createTeacher(TeacherRequest request) {
-        UserAccount user = createBaseUser(request.username(), request.password(), request.fullName(), request.email(), request.phone(), "TEACHER", request.active());
+        UserAccount user = createBaseUser(request.username(), request.password(), request.fullName(), request.email(),
+                request.phone(), "TEACHER", request.active());
         TeacherProfile profile = new TeacherProfile();
         profile.id = user.id;
         profile.degree = request.degree();
@@ -153,7 +151,8 @@ public class UserManagementService {
     @Transactional
     public Map<String, Object> updateTeacher(Long id, TeacherRequest request) {
         UserAccount user = requireUser(id, "TEACHER");
-        updateBaseUser(user, request.fullName(), request.email(), request.phone(), request.active(), request.password());
+        updateBaseUser(user, request.fullName(), request.email(), request.phone(), request.active(),
+                request.password());
         TeacherProfile profile = teachers.findById(id).orElseGet(() -> {
             TeacherProfile created = new TeacherProfile();
             created.id = id;
@@ -169,7 +168,8 @@ public class UserManagementService {
 
     @Transactional
     public Map<String, Object> createStudent(StudentRequest request) {
-        UserAccount user = createBaseUser(request.username(), request.password(), request.fullName(), request.email(), request.phone(), "STUDENT", request.active());
+        UserAccount user = createBaseUser(request.username(), request.password(), request.fullName(), request.email(),
+                request.phone(), "STUDENT", request.active());
         StudentProfile profile = new StudentProfile();
         profile.id = user.id;
         profile.dateOfBirth = request.dateOfBirth();
@@ -182,7 +182,8 @@ public class UserManagementService {
     @Transactional
     public Map<String, Object> updateStudent(Long id, StudentRequest request) {
         UserAccount user = requireUser(id, "STUDENT");
-        updateBaseUser(user, request.fullName(), request.email(), request.phone(), request.active(), request.password());
+        updateBaseUser(user, request.fullName(), request.email(), request.phone(), request.active(),
+                request.password());
         StudentProfile profile = students.findById(id).orElseGet(() -> {
             StudentProfile created = new StudentProfile();
             created.id = id;
@@ -197,7 +198,8 @@ public class UserManagementService {
 
     @Transactional
     public Map<String, Object> createParent(ParentRequest request) {
-        UserAccount user = createBaseUser(request.username(), request.password(), request.fullName(), request.email(), request.phone(), "PARENT", request.active());
+        UserAccount user = createBaseUser(request.username(), request.password(), request.fullName(), request.email(),
+                request.phone(), "PARENT", request.active());
         ParentProfile profile = new ParentProfile();
         profile.id = user.id;
         profile.zaloId = request.zaloId();
@@ -210,7 +212,8 @@ public class UserManagementService {
     @Transactional
     public Map<String, Object> updateParent(Long id, ParentRequest request) {
         UserAccount user = requireUser(id, "PARENT");
-        updateBaseUser(user, request.fullName(), request.email(), request.phone(), request.active(), request.password());
+        updateBaseUser(user, request.fullName(), request.email(), request.phone(), request.active(),
+                request.password());
         ParentProfile profile = parents.findById(id).orElseGet(() -> {
             ParentProfile created = new ParentProfile();
             created.id = id;
@@ -285,7 +288,8 @@ public class UserManagementService {
         return baseMap(user);
     }
 
-    private UserAccount createBaseUser(String username, String password, String fullName, String email, String phone, String role, Boolean active) {
+    private UserAccount createBaseUser(String username, String password, String fullName, String email, String phone,
+            String role, Boolean active) {
         if (isBlank(username) || isBlank(fullName)) {
             throw new IllegalArgumentException("username and fullName are required");
         }
@@ -303,7 +307,8 @@ public class UserManagementService {
         return users.save(user);
     }
 
-    private void updateBaseUser(UserAccount user, String fullName, String email, String phone, Boolean active, String password) {
+    private void updateBaseUser(UserAccount user, String fullName, String email, String phone, Boolean active,
+            String password) {
         if (!isBlank(fullName)) {
             user.fullName = fullName.trim();
         }
@@ -342,18 +347,61 @@ public class UserManagementService {
         map.put("dateOfBirth", profile == null ? null : profile.dateOfBirth);
         map.put("address", profile == null ? null : profile.address);
         map.put("enrollDate", profile == null ? null : profile.enrollDate);
+        List<String> parentDetails = studentParents.findByIdStudentId(user.id).stream()
+                .map(link -> {
+                    Long parentId = link.id.parentId;
+                    // Tìm thông tin tài khoản của phụ huynh trong bảng UserAccount để lấy Họ tên và
+                    // Username
+                    return users.findById(parentId)
+                            .map(u -> u.fullName + " (" + u.username + ")")
+                            .orElse("Không rõ");
+                })
+                .toList();
+        map.put("parentName", parentDetails.isEmpty() ? null : String.join(", ", parentDetails));
+
         return map;
     }
 
-    private Map<String, Object> parentMap(UserAccount user) {
-        ParentProfile profile = parents.findById(user.id).orElse(null);
-        Map<String, Object> map = baseMap(user);
-        map.put("zaloId", profile == null ? null : profile.zaloId);
-        map.put("facebookId", profile == null ? null : profile.facebookId);
-        map.put("relationship", profile == null ? null : profile.relationship);
-        map.put("studentIds", studentParents.findByIdParentId(user.id).stream().map(link -> link.id.studentId).toList());
-        return map;
-    }
+   private Map<String, Object> parentMap(UserAccount user) {
+    ParentProfile profile = parents.findById(user.id).orElse(null);
+    Map<String, Object> map = baseMap(user);
+    map.put("zaloId", profile == null ? null : profile.zaloId);
+    map.put("facebookId", profile == null ? null : profile.facebookId);
+    map.put("relationship", profile == null ? null : profile.relationship);
+    
+    // Đã thêm: Lấy danh sách ID học sinh để truyền về cho Frontend gọi API Tổng quan/Điểm danh
+    List<Long> studentIds = studentParents.findByIdParentId(user.id).stream()
+        .map(link -> link.id.studentId)
+        .toList();
+
+    // 1. Lấy danh sách thông tin chi tiết "Tên (username)"
+    List<String> studentDetails = studentParents.findByIdParentId(user.id).stream()
+        .map(link -> {
+            Long studentId = link.id.studentId;
+            return users.findById(studentId)
+                    .map(u -> u.fullName + " (" + u.username + ")")
+                    .orElse("Không rõ");
+        })
+        .toList();
+
+    // 2. Lấy danh sách CHỈ GỒM TÊN
+    List<String> studentNamesOnly = studentParents.findByIdParentId(user.id).stream()
+        .map(link -> {
+            Long studentId = link.id.studentId;
+            return users.findById(studentId)
+                    .map(u -> u.fullName)
+                    .orElse("Học sinh không tồn tại");
+        })
+        .toList();
+        
+    // 3. Đẩy tất cả dữ liệu vào Map
+    map.put("studentIds", studentIds); // Đã thêm: Giúp Frontend biết ID nào để gọi API điểm danh/học phí
+    map.put("studentId", studentIds.isEmpty() ? null : studentIds.get(0)); // Phục vụ trường hợp hệ thống cũ chỉ đọc 1 ID đơn lẻ
+    map.put("studentName", studentDetails.isEmpty() ? null : String.join(", ", studentDetails)); 
+    map.put("studentNames", studentNamesOnly); 
+
+    return map;
+}
 
     private Map<String, Object> withoutPassword(Map<String, Object> map) {
         map.remove("password");

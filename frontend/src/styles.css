@@ -303,7 +303,7 @@ h3 {
   gap: 16px;
   padding: clamp(22px, 4vw, 38px);
   position: relative;
-  z-index: 50;
+  z-index: 1;
 }
 .compact-hero::after {
   pointer-events: none;

@@ -79,7 +79,7 @@ export default function ProfilePage() {
                 <ProfileRow label="Quan hệ" value={profile.relationship} />
                 <ProfileRow label="Zalo ID" value={profile.zaloId} />
                 <ProfileRow label="Facebook ID" value={profile.facebookId} />
-                <ProfileRow label="Học sinh liên kết" value={(profile.studentIds || []).join(", ") || "Chưa liên kết"} />
+                <ProfileRow label="Học sinh liên kết" value={(profile.studentNames || []).join(", ") || "Chưa liên kết"} />
               </>
             )}
             {profile.role === "ADMIN" && (

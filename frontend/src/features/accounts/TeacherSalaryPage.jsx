@@ -14,6 +14,8 @@ export default function TeacherSalaryPage() {
   const { addNotification } = useNotification();
 
   const [modalOpen, setModalOpen] = useState(false);
+  // ── ĐÃ THÊM: State quản lý Modal xác nhận thanh toán thay thế cho window.confirm ──
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [editingRow, setEditingRow] = useState(null);
   const [formValues, setFormValues] = useState({ totalSessions: 0, amount: 0, status: "PENDING", note: "" });
 
@@ -45,16 +47,25 @@ export default function TeacherSalaryPage() {
     setModalOpen(true);
   }
 
-  async function handleSubmit(e) {
+  // ── ĐÃ SỬA: Hàm chặn submit form chính để kích hoạt Custom Modal ──
+  function handleSubmit(e) {
     e.preventDefault();
     if (editingRow?.status === "PAID") {
       addNotification("Khoản lương đã thanh toán không thể chỉnh sửa", "error");
       return;
     }
+
+    // Nếu chọn trạng thái Đã thanh toán và bản ghi cũ chưa thanh toán -> Mở Modal xác nhận
     if (formValues.status === "PAID" && editingRow?.status !== "PAID") {
-      const confirmPaid = window.confirm("Bạn có chắc chắn muốn thanh toán khoản lương này không? Hành động này không thể hoàn tác.");
-      if (!confirmPaid) return;
+      setConfirmOpen(true);
+    } else {
+      // Trường hợp chỉ cập nhật thông tin (vẫn giữ PENDING) thì lưu trực tiếp
+      executeSave();
     }
+  }
+
+  // ── ĐÃ THÊM: Tách hàm gửi API thực tế ra ngoài để tái sử dụng ──
+  async function executeSave() {
     try {
       await apiPost("/teacher-salary", {
         teacherId: editingRow.teacherId,
@@ -67,6 +78,7 @@ export default function TeacherSalaryPage() {
       });
       addNotification("Cập nhật lương thành công!", "success");
       setModalOpen(false);
+      setConfirmOpen(false); // Đóng luôn cả modal xác nhận nếu đang mở
       loadSalaries();
     } catch (err) {
       addNotification(err.message, "error");
@@ -78,7 +90,7 @@ export default function TeacherSalaryPage() {
     { key: "salaryRate", label: "Lương cơ bản", render: (value) => formatMoney(value) },
     { key: "totalSessions", label: "Số buổi dạy" },
     { key: "amount", label: "Thực lĩnh", render: (value) => formatMoney(value) },
-    { key: "status", label: "Trạng thái", render: (value) => <span className={`status-pill ${value === "PENDING" ? "danger" : "success"}`}>{value === "PENDING" ? "Chưa thanh toán" : "Đã thanh toán"}</span> },
+    { key: "status", label: "Trạng thái", render: (value) => <span className={`status-pill ${value === "PENDING" ? "danger" : "success"}`}>{value === "PENDING" ? "UNPAID" : "PAID"}</span> },
     { key: "paidDate", label: "Ngày trả", render: (value) => value ? new Date(value).toLocaleDateString("vi-VN") : "-" },
     {
       key: "actions",
@@ -107,7 +119,7 @@ export default function TeacherSalaryPage() {
             <div>
               <label style={{ display: "block", marginBottom: "5px", fontSize: "0.85rem", fontWeight: 700 }}>Tháng</label>
               <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="input-field" style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--line)", background: "#fff" }}>
-                {Array.from({ length: 12 }).map((_, i) => <option key={i+1} value={i+1}>Tháng {i+1}</option>)}
+                {Array.from({ length: 12 }).map((_, i) => <option key={i + 1} value={i + 1}>Tháng {i + 1}</option>)}
               </select>
             </div>
             <div>
@@ -128,13 +140,14 @@ export default function TeacherSalaryPage() {
         </div>
       </section>
 
+      {/* ── MODAL CHỈNH SỬA CHÍNH ── */}
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={`Cập nhật lương: ${editingRow?.teacherName} (${month}/${year})`}>
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <Input label="Số buổi dạy" type="number" value={formValues.totalSessions} onChange={(e) => setFormValues({...formValues, totalSessions: e.target.value})} disabled={editingRow?.status === "PAID"} />
-          <Input label="Số tiền thanh toán" type="number" value={formValues.amount} onChange={(e) => setFormValues({...formValues, amount: e.target.value})} disabled={editingRow?.status === "PAID"} />
-          <Select label="Trạng thái" options={[{value: "PENDING", label: "Chưa thanh toán"}, {value: "PAID", label: "Đã thanh toán"}]} value={formValues.status} onChange={(e) => setFormValues({...formValues, status: e.target.value})} disabled={editingRow?.status === "PAID"} />
-          <Input label="Ghi chú" value={formValues.note} onChange={(e) => setFormValues({...formValues, note: e.target.value})} disabled={editingRow?.status === "PAID"} />
-          
+        <form onSubmit={handleSubmit} id="salary-form" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <Input label="Số buổi dạy" type="number" value={formValues.totalSessions} onChange={(e) => setFormValues({ ...formValues, totalSessions: e.target.value })} disabled={editingRow?.status === "PAID"} />
+          <Input label="Số tiền thanh toán" type="number" value={formValues.amount} onChange={(e) => setFormValues({ ...formValues, amount: e.target.value })} disabled={editingRow?.status === "PAID"} />
+          <Select label="Trạng thái" options={[{ value: "PENDING", label: "Chưa thanh toán" }, { value: "PAID", label: "Đã thanh toán" }]} value={formValues.status} onChange={(e) => setFormValues({ ...formValues, status: e.target.value })} disabled={editingRow?.status === "PAID"} />
+          <Input label="Ghi chú" value={formValues.note} onChange={(e) => setFormValues({ ...formValues, note: e.target.value })} disabled={editingRow?.status === "PAID"} />
+
           {editingRow?.status === "PAID" && (
             <Alert type="warning" title="Không thể sửa đổi">
               Khoản lương này đã được thanh toán và không thể chỉnh sửa hay quay lại trạng thái chưa thanh toán.
@@ -146,6 +159,33 @@ export default function TeacherSalaryPage() {
             {editingRow?.status !== "PAID" && <Button type="submit">Lưu thay đổi</Button>}
           </div>
         </form>
+      </Modal>
+
+      {/* ── CUSTOM CONFIRM MODAL ĐÃ SỬA CÚ PHÁP CHUẨN ── */}
+      <Modal
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title="Xác nhận thanh toán lương"
+        /* Thêm style đổi màu nền cho toàn bộ Modal tại đây */
+        style={{ backgroundColor: "#f3f6f4" }}
+        footer={(
+          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", width: "100%" }}>
+            <Button variant="secondary" type="button" onClick={() => setConfirmOpen(false)}>Huỷ</Button>
+            <Button
+              type="button"
+              onClick={executeSave}
+              style={{ backgroundColor: "#1D644A", color: "#fff", borderColor: "#1D644A" }}
+            >
+              Xác định
+            </Button>
+          </div>
+        )}
+      >
+        <div style={{ padding: "8px 0", fontSize: "0.95rem", lineHeight: "1.5", color: "#333" }}>
+          Bạn có chắc chắn muốn thanh toán khoản tiền lương này không?
+          <br />
+          <strong style={{ color: "#A84132" }}>Hành động này không thể hoàn thành.</strong>
+        </div>
       </Modal>
     </main>
   );
