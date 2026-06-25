@@ -109,12 +109,37 @@ function InlineConfirm({ message, note, confirmLabel, onConfirm, onCancel, loadi
    MODAL QUẢN LÝ TÀI KHOẢN (gộp tất cả)
 ═══════════════════════════════════════════ */
 function AccountManageModal({ account, onClose, onRefresh, addNotification, students, parents }) {
-  const { userId } = useAuth();
+  const { userId, role } = useAuth();
   const [tab, setTab] = useState("info");
   const [newPassword, setNewPassword] = useState("");
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
   const [confirm, setConfirm] = useState(null); // null | "deactivate" | "activate" | "delete"
   const [actionLoading, setActionLoading] = useState(false);
+  const [confirmUnlinkOpen, setConfirmUnlinkOpen] = useState(false);
+  const [pendingUnlink, setPendingUnlink] = useState(null);
+
+  function handleUnlink(studentId, parentId, studentName, parentName) {
+    setPendingUnlink({ studentId, parentId, studentName, parentName });
+    setConfirmUnlinkOpen(true);
+  }
+
+  async function executeUnlink() {
+    if (!pendingUnlink) return;
+    setConfirmUnlinkOpen(false);
+    try {
+      await parentService.unlinkStudent({
+        studentId: pendingUnlink.studentId,
+        parentId: pendingUnlink.parentId
+      });
+      addNotification("Đã xóa liên kết phụ huynh và học sinh thành công", "success");
+      onRefresh();
+      onClose();
+    } catch (err) {
+      addNotification(err.message || "Không thể xóa liên kết", "error");
+    } finally {
+      setPendingUnlink(null);
+    }
+  }
 
   // Tính danh sách liên kết
   const linkedStudents = account.role === "PARENT"
@@ -199,191 +224,278 @@ function AccountManageModal({ account, onClose, onRefresh, addNotification, stud
   };
 
   return (
-    <Modal
-      isOpen
-      size="md"
-      title={
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <span>Quản lý tài khoản</span>
-          <RoleBadge role={account.role} />
-          {!isActive && (
-            <span style={{
-              display: "inline-flex", alignItems: "center", padding: "3px 9px",
-              borderRadius: 999, fontSize: "0.72rem", fontWeight: 800,
-              background: "rgba(168,65,50,0.1)", color: "#a84132", border: "1px solid rgba(168,65,50,0.2)"
-            }}>INACTIVE</span>
-          )}
-        </div>
-      }
-      onClose={onClose}
-      footer={
-        tab === "info" ? (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              width: "100%"
-            }}
-          >
-            {/* Bên trái */}
-            <div>
-              {isActive ? (
-                <button
-                  className="btn btn-secondary btn-sm"
-                  type="button"
-                  disabled={account.id === userId && account.role === "ADMIN"}
-                  onClick={() =>
-                    setConfirm(confirm === "deactivate" ? null : "deactivate")
-                  }
-                  style={{ color: account.id === userId && account.role === "ADMIN" ? "#ccc" : "#a84132" }}
-                  title={account.id === userId && account.role === "ADMIN" ? "Không thể tự vô hiệu hóa tài khoản của chính mình" : ""}
-                >
-                  Vô hiệu hoá
-                </button>
-              ) : (
-                <button
-                  className="btn btn-secondary btn-sm"
-                  type="button"
-                  onClick={() =>
-                    setConfirm(confirm === "activate" ? null : "activate")
-                  }
-                  style={{ color: "#1f6f50" }}
-                >
-                  ✓ Kích hoạt lại
-                </button>
-              )}
-            </div>
-
-            {/* Bên phải */}
-            <button
-              className="btn btn-danger btn-sm"
-              type="button"
-              onClick={() => setConfirm(confirm === "delete" ? null : "delete")}
+    <>
+      <Modal
+        isOpen
+        size="md"
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <span>Quản lý tài khoản</span>
+            <RoleBadge role={account.role} />
+            {!isActive && (
+              <span style={{
+                display: "inline-flex", alignItems: "center", padding: "3px 9px",
+                borderRadius: 999, fontSize: "0.72rem", fontWeight: 800,
+                background: "rgba(168,65,50,0.1)", color: "#a84132", border: "1px solid rgba(168,65,50,0.2)"
+              }}>INACTIVE</span>
+            )}
+          </div>
+        }
+        onClose={onClose}
+        footer={
+          tab === "info" ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                width: "100%"
+              }}
             >
-              Xoá vĩnh viễn
+              {/* Bên trái */}
+              <div>
+                {isActive ? (
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    type="button"
+                    disabled={account.id === userId && account.role === "ADMIN"}
+                    onClick={() =>
+                      setConfirm(confirm === "deactivate" ? null : "deactivate")
+                    }
+                    style={{ color: account.id === userId && account.role === "ADMIN" ? "#ccc" : "#a84132" }}
+                    title={account.id === userId && account.role === "ADMIN" ? "Không thể tự vô hiệu hóa tài khoản của chính mình" : ""}
+                  >
+                    Vô hiệu hoá
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    type="button"
+                    onClick={() =>
+                      setConfirm(confirm === "activate" ? null : "activate")
+                    }
+                    style={{ color: "#1f6f50" }}
+                  >
+                    ✓ Kích hoạt lại
+                  </button>
+                )}
+              </div>
+
+              {/* Bên phải */}
+              <button
+                className="btn btn-danger btn-sm"
+                type="button"
+                onClick={() => setConfirm(confirm === "delete" ? null : "delete")}
+              >
+                Xoá vĩnh viễn
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+            </div>
+          )
+        }
+      >
+        {/* Avatar + tên */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
+          <div style={{
+            flexShrink: 0, width: 48, height: 48, borderRadius: "50%",
+            background: "linear-gradient(135deg, var(--brand-strong), var(--brand))",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "#fffaf0", fontWeight: 900, fontSize: "1.2rem"
+          }}>
+            {account.fullName?.[0]?.toUpperCase() ?? "?"}
+          </div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: "1.05rem", color: "var(--ink)" }}>{account.fullName}</div>
+            <code className="credential-code" style={{ fontSize: "0.82rem" }}>{account.username}</code>
+          </div>
+        </div>
+
+        {/* Tab switcher */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
+          {[{ key: "info", label: "Thông tin" }, { key: "password", label: "Đổi mật khẩu" }].map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => { setTab(key); setConfirm(null); }}
+              style={{
+                padding: "7px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+                fontWeight: 700, fontSize: "0.85rem",
+                background: tab === key ? "var(--brand)" : "rgba(220,207,184,0.35)",
+                color: tab === key ? "#fffaf0" : "var(--muted)",
+                transition: "background 0.18s, color 0.18s"
+              }}
+            >
+              {label}
             </button>
+          ))}
+        </div>
+
+        {/* Tab: Thông tin */}
+        {tab === "info" && (
+          <div>
+            <DetailRow label="Trạng thái">
+              <span style={{ color: isActive ? "#1f6f50" : "#a84132", fontWeight: 700 }}>
+                {isActive ? "● ACTIVE" : "● INACTIVE"}
+              </span>
+            </DetailRow>
+            <DetailRow label="Email">{account.email || "-"}</DetailRow>
+            <DetailRow label="Điện thoại">{account.phone || "-"}</DetailRow>
+            <DetailRow label="Ngày tạo">
+              {account.createdAt ? new Date(account.createdAt).toLocaleDateString("vi-VN") : "-"}
+            </DetailRow>
+
+            {account.role === "TEACHER" && (<>
+              <DetailRow label="Bằng cấp">{account.degree || "-"}</DetailRow>
+              <DetailRow label="Chuyên môn">{account.specialization || "-"}</DetailRow>
+              <DetailRow label="Lương cơ bản">{account.salaryRate || "-"}</DetailRow>
+              <DetailRow label="Ngày vào làm">
+                {account.joinDate ? new Date(account.joinDate).toLocaleDateString("vi-VN") : "-"}
+              </DetailRow>
+            </>)}
+
+            {account.role === "STUDENT" && (<>
+              <DetailRow label="Ngày sinh">
+                {account.dateOfBirth ? new Date(account.dateOfBirth).toLocaleDateString("vi-VN") : "-"}
+              </DetailRow>
+              <DetailRow label="Ngày nhập học">
+                {account.enrollDate ? new Date(account.enrollDate).toLocaleDateString("vi-VN") : "-"}
+              </DetailRow>
+              <DetailRow label="Địa chỉ">{account.address || "-"}</DetailRow>
+              <DetailRow label="Phụ huynh liên kết">
+                {linkedParents.length > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {linkedParents.map((parent) => (
+                      <div key={parent.id} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span>{parent.fullName} ({parent.username})</span>
+                        {role === "ADMIN" && (
+                          <button
+                            type="button"
+                            className="btn-link"
+                            onClick={() => handleUnlink(account.id, parent.id, account.fullName, parent.fullName)}
+                            style={{
+                              border: "none",
+                              background: "none",
+                              color: "#dc3545",
+                              cursor: "pointer",
+                              fontSize: "0.82rem",
+                              fontWeight: 600,
+                              padding: 0
+                            }}
+                            title="Xóa liên kết"
+                          >
+                            [Xóa liên kết]
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  "Chưa liên kết"
+                )}
+              </DetailRow>
+            </>)}
+
+            {account.role === "PARENT" && (<>
+              <DetailRow label="Zalo ID">{account.zaloId || "-"}</DetailRow>
+              <DetailRow label="Facebook ID">{account.facebookId || "-"}</DetailRow>
+
+              <DetailRow label="Học sinh liên kết">
+                {linkedStudents.length > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {linkedStudents.map((student) => (
+                      <div key={student.id} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span>{student.fullName} ({student.username})</span>
+                        {role === "ADMIN" && (
+                          <button
+                            type="button"
+                            className="btn-link"
+                            onClick={() => handleUnlink(student.id, account.id, student.fullName, account.fullName)}
+                            style={{
+                              border: "none",
+                              background: "none",
+                              color: "#dc3545",
+                              cursor: "pointer",
+                              fontSize: "0.82rem",
+                              fontWeight: 600,
+                              padding: 0
+                            }}
+                            title="Xóa liên kết"
+                          >
+                            [Xóa liên kết]
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  "Chưa liên kết"
+                )}
+              </DetailRow>
+            </>)}
           </div>
-        ) : (
-          <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
-          </div>
-        )
-      }
-    >
-      {/* Avatar + tên */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
-        <div style={{
-          flexShrink: 0, width: 48, height: 48, borderRadius: "50%",
-          background: "linear-gradient(135deg, var(--brand-strong), var(--brand))",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          color: "#fffaf0", fontWeight: 900, fontSize: "1.2rem"
-        }}>
-          {account.fullName?.[0]?.toUpperCase() ?? "?"}
-        </div>
-        <div>
-          <div style={{ fontWeight: 800, fontSize: "1.05rem", color: "var(--ink)" }}>{account.fullName}</div>
-          <code className="credential-code" style={{ fontSize: "0.82rem" }}>{account.username}</code>
-        </div>
-      </div>
+        )}
 
-      {/* Tab switcher */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
-        {[{ key: "info", label: "Thông tin" }, { key: "password", label: "Đổi mật khẩu" }].map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => { setTab(key); setConfirm(null); }}
-            style={{
-              padding: "7px 16px", borderRadius: 999, border: "none", cursor: "pointer",
-              fontWeight: 700, fontSize: "0.85rem",
-              background: tab === key ? "var(--brand)" : "rgba(220,207,184,0.35)",
-              color: tab === key ? "#fffaf0" : "var(--muted)",
-              transition: "background 0.18s, color 0.18s"
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+        {/* Tab: Đổi mật khẩu */}
+        {tab === "password" && (
+          <form onSubmit={handleChangePassword}>
+            <Input
+              id="newPassword"
+              label="Mật khẩu mới"
+              name="password"
+              type="text"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <div className="form-actions" style={{ marginTop: 8 }}>
+              <Button type="submit" disabled={passwordSubmitting}>
+                {passwordSubmitting ? "Đang lưu..." : "Lưu mật khẩu"}
+              </Button>
+            </div>
+          </form>
+        )}
 
-      {/* Tab: Thông tin */}
-      {tab === "info" && (
-        <div>
-          <DetailRow label="Trạng thái">
-            <span style={{ color: isActive ? "#1f6f50" : "#a84132", fontWeight: 700 }}>
-              {isActive ? "● ACTIVE" : "● INACTIVE"}
-            </span>
-          </DetailRow>
-          <DetailRow label="Email">{account.email || "-"}</DetailRow>
-          <DetailRow label="Điện thoại">{account.phone || "-"}</DetailRow>
-          <DetailRow label="Ngày tạo">
-            {account.createdAt ? new Date(account.createdAt).toLocaleDateString("vi-VN") : "-"}
-          </DetailRow>
-
-          {account.role === "TEACHER" && (<>
-            <DetailRow label="Bằng cấp">{account.degree || "-"}</DetailRow>
-            <DetailRow label="Chuyên môn">{account.specialization || "-"}</DetailRow>
-            <DetailRow label="Lương cơ bản">{account.salaryRate || "-"}</DetailRow>
-            <DetailRow label="Ngày vào làm">
-              {account.joinDate ? new Date(account.joinDate).toLocaleDateString("vi-VN") : "-"}
-            </DetailRow>
-          </>)}
-
-          {account.role === "STUDENT" && (<>
-            <DetailRow label="Ngày sinh">
-              {account.dateOfBirth ? new Date(account.dateOfBirth).toLocaleDateString("vi-VN") : "-"}
-            </DetailRow>
-            <DetailRow label="Ngày nhập học">
-              {account.enrollDate ? new Date(account.enrollDate).toLocaleDateString("vi-VN") : "-"}
-            </DetailRow>
-            <DetailRow label="Địa chỉ">{account.address || "-"}</DetailRow>
-            <DetailRow label="Phụ huynh liên kết">
-              {account.parentName || "Chưa liên kết"}
-            </DetailRow>
-          </>)}
-
-          {account.role === "PARENT" && (<>
-            <DetailRow label="Zalo ID">{account.zaloId || "-"}</DetailRow>
-            <DetailRow label="Facebook ID">{account.facebookId || "-"}</DetailRow>
-
-            <DetailRow label="Học sinh liên kết">
-              {account.studentName || "Chưa liên kết"}
-            </DetailRow>
-          </>)}
-        </div>
-      )}
-
-      {/* Tab: Đổi mật khẩu */}
-      {tab === "password" && (
-        <form onSubmit={handleChangePassword}>
-          <Input
-            id="newPassword"
-            label="Mật khẩu mới"
-            name="password"
-            type="text"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
+        {/* Inline confirm */}
+        {confirm && confirmConfig[confirm] && (
+          <InlineConfirm
+            message={confirmConfig[confirm].message}
+            note={confirmConfig[confirm].note}
+            confirmLabel={confirmConfig[confirm].confirmLabel}
+            onConfirm={confirmConfig[confirm].onConfirm}
+            onCancel={() => setConfirm(null)}
+            loading={actionLoading}
           />
-          <div className="form-actions" style={{ marginTop: 8 }}>
-            <Button type="submit" disabled={passwordSubmitting}>
-              {passwordSubmitting ? "Đang lưu..." : "Lưu mật khẩu"}
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={confirmUnlinkOpen}
+        onClose={() => setConfirmUnlinkOpen(false)}
+        title="Xác nhận xóa liên kết"
+        size="md"
+        footer={(
+          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", width: "100%" }}>
+            <Button variant="secondary" type="button" onClick={() => setConfirmUnlinkOpen(false)}>Hủy</Button>
+            <Button
+              type="button"
+              onClick={executeUnlink}
+              style={{ backgroundColor: "#dc3545", color: "#fff", borderColor: "#dc3545" }}
+            >
+              Xác nhận xóa
             </Button>
           </div>
-        </form>
-      )}
-
-      {/* Inline confirm */}
-      {confirm && confirmConfig[confirm] && (
-        <InlineConfirm
-          message={confirmConfig[confirm].message}
-          note={confirmConfig[confirm].note}
-          confirmLabel={confirmConfig[confirm].confirmLabel}
-          onConfirm={confirmConfig[confirm].onConfirm}
-          onCancel={() => setConfirm(null)}
-          loading={actionLoading}
-        />
-      )}
-    </Modal>
+        )}
+      >
+        <div style={{ padding: "8px 0", fontSize: "0.95rem", lineHeight: "1.5", color: "#333" }}>
+          Bạn có chắc chắn muốn xóa liên kết giữa phụ huynh <strong>{pendingUnlink?.parentName}</strong> và học sinh <strong>{pendingUnlink?.studentName}</strong> không?
+          <br />
+          <span style={{ color: "#d9534f", fontSize: "0.85rem", display: "block", marginTop: "8px" }}>
+            * Lưu ý: Việc xóa liên kết sẽ ngừng chia sẻ thông tin học tập và học phí của học sinh với tài khoản phụ huynh này.
+          </span>
+        </div>
+      </Modal>
+    </>
   );
 }
 
@@ -443,8 +555,12 @@ export default function AccountsPage() {
     }
     setSubmitting(true);
     try {
-      await servicesByRole[values.role].create(toPayload(values));
-      addNotification("Tạo tài khoản thành công", "success");
+      const res = await servicesByRole[values.role].create(toPayload(values));
+      if (res && res.emailSent) {
+        addNotification(`Tạo tài khoản thành công và đã gửi email thông tin tới: ${res.email}`, "success");
+      } else {
+        addNotification("Tạo tài khoản thành công", "success");
+      }
       setValues({ ...emptyForm, role: values.role });
       await loadAccounts();
     } catch (err) {

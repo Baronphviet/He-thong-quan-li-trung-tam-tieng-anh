@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert, Button, Card, Input, Loading, Table, Modal } from "../../components/common";
 import { masterService } from "../../services";
 import { useNotification } from "../../hooks";
+import { useAuth } from "../../store";
 
 export default function MasterDataPage() {
   const [academicYears, setAcademicYears] = useState([]);
@@ -9,6 +10,13 @@ export default function MasterDataPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { addNotification } = useNotification();
+  const { role } = useAuth();
+
+  const [confirmDeleteYearOpen, setConfirmDeleteYearOpen] = useState(false);
+  const [pendingDeleteYear, setPendingDeleteYear] = useState(null);
+
+  const [confirmDeleteAgeOpen, setConfirmDeleteAgeOpen] = useState(false);
+  const [pendingDeleteAge, setPendingDeleteAge] = useState(null);
 
   const [yearForm, setYearForm] = useState({ yearName: "", startDate: "", endDate: "", active: true });
   const [ageForm, setAgeForm] = useState({ groupName: "", description: "" });
@@ -55,14 +63,27 @@ export default function MasterDataPage() {
     }
   }
 
-  async function handleDeleteYear(id) {
-    if (!window.confirm("Bạn có chắc chắn muốn xoá năm học này không?")) return;
+  function handleDeleteYear(item) {
+    if (role !== "ADMIN") {
+      addNotification("Chỉ có ADMIN mới có quyền xóa năm học", "error");
+      return;
+    }
+    setPendingDeleteYear(item);
+    setConfirmDeleteYearOpen(true);
+  }
+
+  async function executeDeleteYear() {
+    if (!pendingDeleteYear) return;
     try {
-      await masterService.deleteAcademicYear(id);
+      await masterService.deleteAcademicYear(pendingDeleteYear.id);
       addNotification("Xoá năm học thành công", "success");
+      setConfirmDeleteYearOpen(false);
+      setPendingDeleteYear(null);
       loadData();
     } catch (err) {
       addNotification(err.message || "Không thể xoá năm học (Có thể do đã có lớp học tham chiếu)", "error");
+      setConfirmDeleteYearOpen(false);
+      setPendingDeleteYear(null);
     }
   }
 
@@ -85,14 +106,27 @@ export default function MasterDataPage() {
     }
   }
 
-  async function handleDeleteAge(id) {
-    if (!window.confirm("Bạn có chắc chắn muốn xoá độ tuổi này không?")) return;
+  function handleDeleteAge(item) {
+    if (role !== "ADMIN") {
+      addNotification("Chỉ có ADMIN mới có quyền xóa độ tuổi", "error");
+      return;
+    }
+    setPendingDeleteAge(item);
+    setConfirmDeleteAgeOpen(true);
+  }
+
+  async function executeDeleteAge() {
+    if (!pendingDeleteAge) return;
     try {
-      await masterService.deleteAgeGroup(id);
+      await masterService.deleteAgeGroup(pendingDeleteAge.id);
       addNotification("Xoá độ tuổi thành công", "success");
+      setConfirmDeleteAgeOpen(false);
+      setPendingDeleteAge(null);
       loadData();
     } catch (err) {
       addNotification(err.message || "Không thể xoá độ tuổi (Có thể do đã có lớp học tham chiếu)", "error");
+      setConfirmDeleteAgeOpen(false);
+      setPendingDeleteAge(null);
     }
   }
 
@@ -119,22 +153,26 @@ export default function MasterDataPage() {
               <Button type="submit" disabled={submittingYear} style={{ marginTop: "10px" }}>{submittingYear ? "Đang xử lý..." : "Thêm Năm học"}</Button>
             </form>
             
-            <table className="table" style={{ width: "100%" }}>
-              <thead><tr><th>Năm học</th><th>Bắt đầu</th><th>Kết thúc</th><th>Hành động</th></tr></thead>
-              <tbody>
-                {academicYears.length === 0 && <tr><td colSpan={4} className="muted">Chưa có dữ liệu</td></tr>}
-                {academicYears.map(item => (
-                  <tr key={item.id}>
-                    <td>{item.yearName}</td>
-                    <td>{item.startDate}</td>
-                    <td>{item.endDate}</td>
-                    <td>
-                      <Button variant="danger" size="sm" type="button" onClick={() => handleDeleteYear(item.id)}>Xoá</Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="table-scroll">
+              <table className="table" style={{ width: "100%", minWidth: "auto" }}>
+                <thead><tr><th>Năm học</th><th>Bắt đầu</th><th>Kết thúc</th><th>Hành động</th></tr></thead>
+                <tbody>
+                  {academicYears.length === 0 && <tr><td colSpan={4} className="muted">Chưa có dữ liệu</td></tr>}
+                  {academicYears.map(item => (
+                    <tr key={item.id}>
+                      <td>{item.yearName}</td>
+                      <td>{item.startDate}</td>
+                      <td>{item.endDate}</td>
+                      <td>
+                        {role === "ADMIN" && (
+                          <Button variant="danger" size="sm" type="button" onClick={() => handleDeleteYear(item)}>Xoá</Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Card>
         </div>
 
@@ -148,24 +186,82 @@ export default function MasterDataPage() {
               <Button type="submit" disabled={submittingAge} style={{ marginTop: "10px" }}>{submittingAge ? "Đang xử lý..." : "Thêm Độ tuổi"}</Button>
             </form>
             
-            <table className="table" style={{ width: "100%" }}>
-              <thead><tr><th>Nhóm tuổi</th><th>Mô tả</th><th>Hành động</th></tr></thead>
-              <tbody>
-                {ageGroups.length === 0 && <tr><td colSpan={3} className="muted">Chưa có dữ liệu</td></tr>}
-                {ageGroups.map(item => (
-                  <tr key={item.id}>
-                    <td>{item.groupName}</td>
-                    <td>{item.description || "-"}</td>
-                    <td>
-                      <Button variant="danger" size="sm" type="button" onClick={() => handleDeleteAge(item.id)}>Xoá</Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="table-scroll">
+              <table className="table" style={{ width: "100%", minWidth: "auto" }}>
+                <thead><tr><th>Nhóm tuổi</th><th>Mô tả</th><th>Hành động</th></tr></thead>
+                <tbody>
+                  {ageGroups.length === 0 && <tr><td colSpan={3} className="muted">Chưa có dữ liệu</td></tr>}
+                  {ageGroups.map(item => (
+                    <tr key={item.id}>
+                      <td>{item.groupName}</td>
+                      <td>{item.description || "-"}</td>
+                      <td>
+                        {role === "ADMIN" && (
+                          <Button variant="danger" size="sm" type="button" onClick={() => handleDeleteAge(item)}>Xoá</Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Card>
         </div>
       </section>
+
+      <Modal
+        isOpen={confirmDeleteYearOpen}
+        onClose={() => { setConfirmDeleteYearOpen(false); setPendingDeleteYear(null); }}
+        title="Xác nhận xóa năm học"
+        size="md"
+        footer={(
+          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", width: "100%" }}>
+            <Button variant="secondary" type="button" onClick={() => { setConfirmDeleteYearOpen(false); setPendingDeleteYear(null); }}>Hủy</Button>
+            <Button
+              type="button"
+              onClick={executeDeleteYear}
+              style={{ backgroundColor: "#dc3545", color: "#fff", borderColor: "#dc3545" }}
+            >
+              Xác nhận xóa
+            </Button>
+          </div>
+        )}
+      >
+        <div style={{ padding: "8px 0", fontSize: "0.95rem", lineHeight: "1.5", color: "#333" }}>
+          Bạn có chắc chắn muốn xóa năm học <strong>{pendingDeleteYear?.yearName}</strong> không?
+          <br />
+          <span style={{ color: "#d9534f", fontSize: "0.85rem", display: "block", marginTop: "8px" }}>
+            * Lưu ý: Thao tác này không thể hoàn tác và chỉ có thể thực hiện nếu chưa có lớp học nào liên kết với năm học này.
+          </span>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={confirmDeleteAgeOpen}
+        onClose={() => { setConfirmDeleteAgeOpen(false); setPendingDeleteAge(null); }}
+        title="Xác nhận xóa nhóm tuổi"
+        size="md"
+        footer={(
+          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", width: "100%" }}>
+            <Button variant="secondary" type="button" onClick={() => { setConfirmDeleteAgeOpen(false); setPendingDeleteAge(null); }}>Hủy</Button>
+            <Button
+              type="button"
+              onClick={executeDeleteAge}
+              style={{ backgroundColor: "#dc3545", color: "#fff", borderColor: "#dc3545" }}
+            >
+              Xác nhận xóa
+            </Button>
+          </div>
+        )}
+      >
+        <div style={{ padding: "8px 0", fontSize: "0.95rem", lineHeight: "1.5", color: "#333" }}>
+          Bạn có chắc chắn muốn xóa nhóm tuổi <strong>{pendingDeleteAge?.groupName}</strong> không?
+          <br />
+          <span style={{ color: "#d9534f", fontSize: "0.85rem", display: "block", marginTop: "8px" }}>
+            * Lưu ý: Thao tác này không thể hoàn tác và chỉ có thể thực hiện nếu chưa có lớp học nào liên kết với nhóm tuổi này.
+          </span>
+        </div>
+      </Modal>
     </main>
   );
 }

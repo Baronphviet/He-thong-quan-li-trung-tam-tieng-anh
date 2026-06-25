@@ -96,6 +96,25 @@ public class AnnouncementService {
         announcements.save(announcement);
     }
 
+    @Transactional
+    public void activate(Long id) {
+        Announcement announcement = announcements.findById(id)
+                .orElseThrow(() -> new NotFoundException("Announcement not found: " + id));
+        announcement.active = true;
+        if (announcement.endDate != null && announcement.endDate.isBefore(LocalDate.now())) {
+            announcement.endDate = LocalDate.now().plusDays(7);
+        }
+        announcements.save(announcement);
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        if (!announcements.existsById(id)) {
+            throw new NotFoundException("Announcement not found: " + id);
+        }
+        announcements.deleteById(id);
+    }
+
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }

@@ -51,6 +51,7 @@ public class MasterDataService {
         }
         try {
             academicYears.deleteById(id);
+            academicYears.flush();
         } catch (Exception e) {
             throw new IllegalStateException("Không thể xoá năm học này vì đã có dữ liệu lớp học tham chiếu đến.", e);
         }
@@ -79,6 +80,7 @@ public class MasterDataService {
         }
         try {
             ageGroups.deleteById(id);
+            ageGroups.flush();
         } catch (Exception e) {
             throw new IllegalStateException("Không thể xoá độ tuổi này vì đã có dữ liệu lớp học tham chiếu đến.", e);
         }

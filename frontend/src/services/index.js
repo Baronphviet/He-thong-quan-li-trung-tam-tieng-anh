@@ -6,7 +6,7 @@ export const authService = {
 
 export const userService = {
   softDelete: (id) => apiDelete(`/users/${id}`),
-  changePassword: (id, password) => apiPut(`/users/${id}/password`, { password }),
+  changePassword: (id, password) => apiPatch(`/users/${id}/password`, { password }),
   getProfile: (id) => apiGet(`/users/${id}/profile`),
   activate: (id) => apiPut(`/users/${id}/activate`),
   hardDelete: (id) => apiDelete(`/users/${id}/hard`)
@@ -45,20 +45,24 @@ export const parentService = {
   getAll: () => apiGet("/parents"),
   create: (data) => apiPost("/parents", data),
   update: (id, data) => apiPut(`/parents/${id}`, data),
-  linkStudent: (data) => apiPost("/parents/link-student", data)
+  linkStudent: (data) => apiPost("/parents/link-student", data),
+  unlinkStudent: (data) => apiPost("/parents/unlink-student", data)
 };
 
 export const enrollmentService = {
   getAll: () => apiGet("/enrollments"),
   create: (data) => apiPost("/enrollments", data),
-  update: (id, data) => apiPut(`/enrollments/${id}`, data)
+  update: (id, data) => apiPut(`/enrollments/${id}`, data),
+  drop: (id) => apiDelete(`/enrollments/${id}`)
 };
 
 export const paymentService = {
   getAll: () => apiGet("/monthly-fees"),
   getById: (id) => apiGet(`/monthly-fees/${id}`),
   processPayment: (data) => apiPost("/payments", data),
-  getFinanceReport: () => apiGet("/reports/finance-monthly")
+  getFinanceReport: () => apiGet("/reports/finance-monthly"),
+  getBankConfig: () => apiGet("/bank-payment-config"),
+  updateBankConfig: (data) => apiPut("/bank-payment-config", data)
 };
 
 export const announcementService = {
@@ -68,7 +72,9 @@ export const announcementService = {
   getById: (id) => apiGet(`/announcements/${id}`),
   create: (data) => apiPost("/announcements", data),
   update: (id, data) => apiPut(`/announcements/${id}`, data),
-  delete: (id) => apiDelete(`/announcements/${id}`)
+  delete: (id) => apiDelete(`/announcements/${id}`),
+  deactivate: (id) => apiPost(`/announcements/${id}/deactivate`),
+  activate: (id) => apiPost(`/announcements/${id}/activate`)
 };
 
 export const masterService = {

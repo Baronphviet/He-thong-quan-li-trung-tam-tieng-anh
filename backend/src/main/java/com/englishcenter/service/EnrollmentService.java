@@ -9,6 +9,11 @@ import com.englishcenter.repository.EnrollmentRepository;
 import com.englishcenter.repository.MonthlyFeeRepository;
 import com.englishcenter.repository.StudentRepository;
 import com.englishcenter.repository.UserRepository;
+import com.englishcenter.repository.ClassSessionRepository;
+import com.englishcenter.repository.AttendanceRepository;
+import com.englishcenter.repository.PaymentRepository;
+import com.englishcenter.entity.Attendance;
+import com.englishcenter.entity.Payment;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
@@ -25,6 +30,9 @@ public class EnrollmentService {
     private final UserRepository users;
     private final MonthlyFeeRepository monthlyFees;
     private final ClassService classService;
+    private final ClassSessionRepository sessions;
+    private final AttendanceRepository attendances;
+    private final PaymentRepository payments;
 
     public EnrollmentService(
             EnrollmentRepository enrollments,
@@ -32,7 +40,10 @@ public class EnrollmentService {
             ClassRepository classes,
             UserRepository users,
             MonthlyFeeRepository monthlyFees,
-            ClassService classService
+            ClassService classService,
+            ClassSessionRepository sessions,
+            AttendanceRepository attendances,
+            PaymentRepository payments
     ) {
         this.enrollments = enrollments;
         this.students = students;
@@ -40,6 +51,9 @@ public class EnrollmentService {
         this.users = users;
         this.monthlyFees = monthlyFees;
         this.classService = classService;
+        this.sessions = sessions;
+        this.attendances = attendances;
+        this.payments = payments;
     }
 
     public record EnrollmentRequest(
@@ -66,17 +80,30 @@ public class EnrollmentService {
         if (classEntity.maxStudents != null && classEntity.maxStudents > 0 && activeCount >= classEntity.maxStudents) {
             throw new IllegalArgumentException("Class has reached maximum students");
         }
-        enrollments.findByStudentIdAndClassId(request.studentId(), request.classId()).ifPresent(existing -> {
-            throw new IllegalArgumentException("Student already enrolled in this class");
-        });
 
-        Enrollment enrollment = new Enrollment();
-        enrollment.studentId = request.studentId();
-        enrollment.classId = request.classId();
-        enrollment.discountRate = defaultRate(request.discountRate());
-        enrollment.enrollDate = request.enrollDate() == null ? LocalDate.now() : request.enrollDate();
-        enrollment.status = isBlank(request.status()) ? "ACTIVE" : request.status();
-        Enrollment saved = enrollments.save(enrollment);
+        Enrollment enrollment = enrollments.findByStudentIdAndClassId(request.studentId(), request.classId()).orElse(null);
+        if (enrollment != null) {
+            if ("ACTIVE".equals(enrollment.status)) {
+                throw new IllegalArgumentException("Student already enrolled in this class");
+            } else if ("DROPPED".equals(enrollment.status)) {
+                enrollment.status = isBlank(request.status()) ? "ACTIVE" : request.status();
+                enrollment.discountRate = defaultRate(request.discountRate());
+                enrollment.enrollDate = request.enrollDate() == null ? LocalDate.now() : request.enrollDate();
+                Enrollment saved = enrollments.save(enrollment);
+                generateMonthlyFee(saved, request.totalSessions() == null ? 0 : request.totalSessions());
+                return toMap(saved);
+            } else {
+                throw new IllegalArgumentException("Student enrollment has status: " + enrollment.status);
+            }
+        }
+
+        Enrollment newEnrollment = new Enrollment();
+        newEnrollment.studentId = request.studentId();
+        newEnrollment.classId = request.classId();
+        newEnrollment.discountRate = defaultRate(request.discountRate());
+        newEnrollment.enrollDate = request.enrollDate() == null ? LocalDate.now() : request.enrollDate();
+        newEnrollment.status = isBlank(request.status()) ? "ACTIVE" : request.status();
+        Enrollment saved = enrollments.save(newEnrollment);
         generateMonthlyFee(saved, request.totalSessions() == null ? 0 : request.totalSessions());
         return toMap(saved);
     }
@@ -165,5 +192,47 @@ public class EnrollmentService {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    @Transactional
+    public void dropEnrollment(Long id) {
+        Enrollment enrollment = requireEnrollment(id);
+
+        // 1. Kiểm tra điều kiện: Chưa học buổi nào (PRESENT hoặc LATE)
+        List<Long> sessionIds = sessions.findByClassIdOrderBySessionDateDescSessionNumberDesc(enrollment.classId)
+                .stream().map(s -> s.id).toList();
+        long presentCount = 0;
+        if (!sessionIds.isEmpty()) {
+            presentCount = attendances.findAll().stream()
+                    .filter(a -> a.studentId.equals(enrollment.studentId) 
+                            && sessionIds.contains(a.sessionId) 
+                            && ("PRESENT".equals(a.status) || "LATE".equals(a.status)))
+                    .count();
+        }
+        if (presentCount > 0) {
+            throw new IllegalArgumentException("Học sinh này đã tham gia học, không thể xóa khỏi lớp!");
+        }
+
+        // 2. Xóa các bản ghi điểm danh khác nếu có (ví dụ: các bản ghi ABSENT)
+        if (!sessionIds.isEmpty()) {
+            List<Attendance> studentAtts = attendances.findAll().stream()
+                    .filter(a -> a.studentId.equals(enrollment.studentId) && sessionIds.contains(a.sessionId))
+                    .toList();
+            attendances.deleteAll(studentAtts);
+        }
+
+        // 3. Xóa các thanh toán liên quan và học phí (để không bị mất học phí/không nợ phí)
+        List<MonthlyFee> studentFees = monthlyFees.findByEnrollmentId(enrollment.id);
+        for (MonthlyFee fee : studentFees) {
+            List<Payment> feePayments = payments.findByFeeIdOrderByPaymentDateDesc(fee.id);
+            if (!feePayments.isEmpty()) {
+                payments.deleteAll(feePayments);
+            }
+        }
+        monthlyFees.deleteAll(studentFees);
+
+        // 4. Cập nhật trạng thái xóa mềm Enrollment sang DROPPED
+        enrollment.status = "DROPPED";
+        enrollments.save(enrollment);
     }
 }

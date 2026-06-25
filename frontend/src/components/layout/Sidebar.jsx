@@ -51,7 +51,8 @@ const MENU = {
     title: "Phụ huynh",
     items: [
       { to: "/parent", label: "Tổng quan", icon: "grid", end: true },
-      { to: "/parent/attendance", label: "Điểm danh", icon: "check" }
+      { to: "/parent/attendance", label: "Điểm danh", icon: "check" },
+      { to: "/parent/payment", label: "Thanh toán học phí", icon: "wallet" }
     ]
   }
 };

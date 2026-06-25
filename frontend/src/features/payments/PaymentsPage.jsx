@@ -4,7 +4,7 @@ import { Alert, Button, Card, Input, Loading, Modal, Select, Table } from "../..
 import { useForm, useModal, useNotification } from "../../hooks";
 import { createValidator, validators } from "../../utils/validators";
 import { PAYMENT_METHOD_OPTIONS } from "../../utils/constants";
-import { formatMoney } from "../../utils/format";
+import { formatMoney, removeAccents } from "../../utils/format";
 
 const emptyPayment = {
   feeId: "",
@@ -28,6 +28,14 @@ export default function PaymentsPage() {
   const { isOpen, open, close } = useModal();
   const form = useForm(emptyPayment, handleSubmit, createValidator(validateRules));
 
+  const [bankConfig, setBankConfig] = useState({
+    bankName: "",
+    accountNumber: "",
+    accountHolder: "",
+    qrCodeImage: ""
+  });
+  const [savingConfig, setSavingConfig] = useState(false);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -36,12 +44,16 @@ export default function PaymentsPage() {
     setLoading(true);
     setError("");
     try {
-      const [feesData, financeData] = await Promise.all([
+      const [feesData, financeData, bankConfigData] = await Promise.all([
         paymentService.getAll(),
-        paymentService.getFinanceReport()
+        paymentService.getFinanceReport(),
+        paymentService.getBankConfig()
       ]);
       setFees(Array.isArray(feesData) ? feesData : []);
       setFinance(Array.isArray(financeData) ? financeData : []);
+      if (bankConfigData) {
+        setBankConfig(bankConfigData);
+      }
     } catch (err) {
       setError(err.message);
       addNotification(err.message, "error");
@@ -67,9 +79,52 @@ export default function PaymentsPage() {
     }
   }
 
+  const handleConfigChange = (e) => {
+    const { name, value } = e.target;
+    setBankConfig((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setBankConfig((prev) => ({
+        ...prev,
+        qrCodeImage: reader.result
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveConfig = async (e) => {
+    e.preventDefault();
+    setSavingConfig(true);
+    try {
+      await paymentService.updateBankConfig(bankConfig);
+      addNotification("Cập nhật thông tin ngân hàng thành công", "success");
+    } catch (err) {
+      addNotification(err.message, "error");
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
   const feesColumns = [
     { key: "studentName", label: "Học sinh" },
     { key: "className", label: "Lớp" },
+    {
+      key: "paymentCode",
+      label: "Mã thanh toán",
+      render: (_, row) => (
+        <code style={{ fontSize: "14px", fontWeight: "bold", background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", color: "#0f172a" }}>
+          HD{row.id} {removeAccents(row.studentName || "").toUpperCase()}
+        </code>
+      )
+    },
     { key: "finalAmount", label: "Cần thu", render: (value) => formatMoney(value) },
     { key: "paidAmount", label: "Đã đóng", render: (value) => formatMoney(value) },
     { key: "outstandingAmount", label: "Còn nợ", render: (value) => formatMoney(value) },
@@ -116,6 +171,86 @@ export default function PaymentsPage() {
       <section className="section grid two">
         <Card title="Tình hình thu chi">
           <Table columns={financeColumns} data={finance} empty="Chưa có dữ liệu" />
+        </Card>
+
+        <Card title="Cấu hình tài khoản ngân hàng & QR Code">
+          <form onSubmit={handleSaveConfig} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <Input
+                id="bankName"
+                name="bankName"
+                label="Tên ngân hàng"
+                value={bankConfig.bankName || ""}
+                onChange={handleConfigChange}
+                required
+              />
+              <Input
+                id="accountNumber"
+                name="accountNumber"
+                label="Số tài khoản"
+                value={bankConfig.accountNumber || ""}
+                onChange={handleConfigChange}
+                required
+              />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'end' }}>
+              <Input
+                id="accountHolder"
+                name="accountHolder"
+                label="Chủ tài khoản"
+                value={bankConfig.accountHolder || ""}
+                onChange={handleConfigChange}
+                required
+              />
+              <div className="form-group" style={{ marginBottom: '1.2rem' }}>
+                <label htmlFor="qrCodeUpload" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: '#374151' }}>Ảnh QR Code (Base64)</label>
+                <input
+                  id="qrCodeUpload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    fontSize: '0.875rem',
+                    color: '#6b7280',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.375rem',
+                    padding: '0.375rem 0.5rem',
+                    cursor: 'pointer'
+                  }}
+                />
+              </div>
+            </div>
+            
+            {bankConfig.qrCodeImage && (
+              <div style={{ textAlign: 'center', marginTop: '0.5rem', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '1rem', background: '#f8fafc' }}>
+                <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '8px', fontWeight: '500' }}>Xem trước mã QR:</p>
+                <img
+                  src={bankConfig.qrCodeImage}
+                  alt="QR Code Preview"
+                  style={{ maxHeight: '180px', maxWidth: '100%', objectFit: 'contain', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#fff', padding: '4px' }}
+                />
+                <div>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    type="button"
+                    onClick={() => setBankConfig(prev => ({ ...prev, qrCodeImage: "" }))}
+                    style={{ marginTop: '8px' }}
+                  >
+                    Xóa ảnh QR
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+              <Button variant="success" type="submit" disabled={savingConfig}>
+                {savingConfig ? "Đang cập nhật..." : "Cập nhật cấu hình"}
+              </Button>
+            </div>
+          </form>
         </Card>
       </section>
 

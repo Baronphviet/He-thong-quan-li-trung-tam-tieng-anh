@@ -10,23 +10,25 @@ import { Link } from "react-router-dom";
 ───────────────────────────────────────────── */
 function WelcomePopup({ notice, onClose }) {
   const overlayRef = useRef(null);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
   useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e) => { if (e.key === "Escape") onClose(dontShowAgain); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, dontShowAgain]);
 
   return (
       <div
           ref={overlayRef}
           className="modal-backdrop wp-backdrop"
-          onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
+          onClick={(e) => { if (e.target === overlayRef.current) onClose(dontShowAgain); }}
       >
-        <div className="modal modal-sm wp-modal" role="dialog" aria-modal="true">
+        <div className="modal modal-md wp-modal" role="dialog" aria-modal="true" style={{ width: "640px", maxWidth: "90%" }}>
           {notice.imageUrl ? (
-              <div className="wp-header-img-wrap">
-                <img src={notice.imageUrl} alt={notice.title} className="wp-header-img" />
-                <button className="modal-close wp-close wp-close-on-img" onClick={onClose} aria-label="Đóng">✕</button>
+              <div className="wp-header-img-wrap" style={{ maxHeight: "280px" }}>
+                <img src={notice.imageUrl} alt={notice.title} className="wp-header-img" style={{ height: "280px", objectFit: "cover" }} />
+                <button className="modal-close wp-close wp-close-on-img" onClick={() => onClose(dontShowAgain)} aria-label="Đóng">✕</button>
               </div>
           ) : (
               <div className="wp-header">
@@ -37,16 +39,27 @@ function WelcomePopup({ notice, onClose }) {
                           strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <button className="modal-close wp-close" onClick={onClose} aria-label="Đóng">✕</button>
+                <button className="modal-close wp-close" onClick={() => onClose(dontShowAgain)} aria-label="Đóng">✕</button>
               </div>
           )}
-          <div className="modal-body">
-            <h3 className="wp-notice-title">{notice.title}</h3>
-            {notice.content && <p className="wp-notice-body">{notice.content}</p>}
+          <div className="modal-body" style={{ padding: "30px 24px" }}>
+            <h3 className="wp-notice-title" style={{ fontSize: "1.45rem", fontWeight: "700", marginBottom: "12px", color: "var(--ink)" }}>{notice.title}</h3>
+            {notice.content && <p className="wp-notice-body" style={{ fontSize: "1rem", lineHeight: "1.65", color: "var(--muted)" }}>{notice.content}</p>}
           </div>
-          <div className="modal-footer">
-            <button className="btn btn-secondary btn-md" onClick={onClose}>Bỏ qua</button>
-            <button className="btn btn-primary btn-md" onClick={onClose}>Đã hiểu</button>
+          <div className="modal-footer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.9rem", color: "var(--muted)", userSelect: "none" }}>
+              <input
+                type="checkbox"
+                checked={dontShowAgain}
+                onChange={(e) => setDontShowAgain(e.target.checked)}
+                style={{ width: "16px", height: "16px", accentColor: "var(--brand)", cursor: "pointer" }}
+              />
+              Không hiển thị lại
+            </label>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button className="btn btn-secondary btn-md" onClick={() => onClose(dontShowAgain)}>Bỏ qua</button>
+              <button className="btn btn-primary btn-md" onClick={() => onClose(dontShowAgain)}>Đã hiểu</button>
+            </div>
           </div>
         </div>
       </div>
@@ -97,14 +110,19 @@ function StatPill({ value, label }) {
 export default function HomePage() {
   const [summary, setSummary]         = useState(null);
   const [sliderItems, setSliderItems] = useState([]);
-  const [popupNotice, setPopupNotice] = useState(null);
+  const [pendingPopups, setPendingPopups] = useState([]);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState("");
 
-  const closePopup = useCallback(() => {
-    if (popupNotice) sessionStorage.setItem(`edulingo_notice_${popupNotice.id}`, "1");
-    setPopupNotice(null);
-  }, [popupNotice]);
+  const handleClosePopup = useCallback((closedPopup, dontShowAgain) => {
+    if (closedPopup) {
+      sessionStorage.setItem(`edulingo_notice_${closedPopup.id}`, "1");
+      if (dontShowAgain) {
+        localStorage.setItem(`edulingo_notice_never_${closedPopup.id}`, "1");
+      }
+      setPendingPopups((prev) => prev.slice(1));
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -133,10 +151,18 @@ export default function HomePage() {
         setSliderItems(live.filter((a) => a.type === "SLIDER"));
         const popups = live.filter((a) => a.type === "POPUP" || a.type === "NOTICE");
         if (popups.length > 0) {
-          const latest = [...popups].sort((a, b) => b.id - a.id)[0];
-          const seenKey = `edulingo_notice_${latest.id}`;
-          if (!sessionStorage.getItem(seenKey)) {
-            setTimeout(() => { if (active) setPopupNotice(latest); }, 700);
+          const sortedPopups = [...popups].sort((a, b) => b.id - a.id);
+          const unseenPopups = sortedPopups.filter((item) => {
+            const sessionSeen = sessionStorage.getItem(`edulingo_notice_${item.id}`);
+            const localNever = localStorage.getItem(`edulingo_notice_never_${item.id}`);
+            return !sessionSeen && !localNever;
+          });
+          if (unseenPopups.length > 0) {
+            setTimeout(() => {
+              if (active) {
+                setPendingPopups(unseenPopups);
+              }
+            }, 700);
           }
         }
       }
@@ -150,7 +176,13 @@ export default function HomePage() {
 
   return (
       <>
-        {popupNotice && <WelcomePopup notice={popupNotice} onClose={closePopup} />}
+        {pendingPopups.length > 0 && (
+          <WelcomePopup
+            key={pendingPopups[0].id}
+            notice={pendingPopups[0]}
+            onClose={(dontShowAgain) => handleClosePopup(pendingPopups[0], dontShowAgain)}
+          />
+        )}
 
         <main className="hp-main">
 

@@ -20,11 +20,13 @@ public class TeacherSalaryService {
     private final TeacherSalaryRepository salaries;
     private final TeacherRepository teacherProfiles;
     private final UserRepository users;
+    private final EmailService emailService;
 
-    public TeacherSalaryService(TeacherSalaryRepository salaries, TeacherRepository teacherProfiles, UserRepository users) {
+    public TeacherSalaryService(TeacherSalaryRepository salaries, TeacherRepository teacherProfiles, UserRepository users, EmailService emailService) {
         this.salaries = salaries;
         this.teacherProfiles = teacherProfiles;
         this.users = users;
+        this.emailService = emailService;
     }
 
     public record SalaryRequest(
@@ -104,6 +106,8 @@ public class TeacherSalaryService {
                     return s;
                 });
 
+        boolean isNewlyPaid = "PAID".equals(req.status()) && (salary.id == null || !"PAID".equals(salary.status));
+
         salary.totalSessions = req.totalSessions() == null ? 0 : req.totalSessions();
         salary.amount = req.amount() == null ? BigDecimal.ZERO : req.amount();
         salary.note = req.note();
@@ -115,6 +119,82 @@ public class TeacherSalaryService {
             salary.paidDate = null;
         }
 
-        salaries.save(salary);
+        TeacherSalary saved = salaries.save(salary);
+
+        if (isNewlyPaid) {
+            try {
+                sendSalaryPaidEmail(saved);
+            } catch (Exception e) {
+                System.err.println("❌ Lỗi kích hoạt gửi email lương giáo viên: " + e.getMessage());
+            }
+        }
+    }
+
+    private void sendSalaryPaidEmail(TeacherSalary salary) {
+        UserAccount teacherUser = users.findById(salary.teacherId).orElse(null);
+        if (teacherUser == null || teacherUser.email == null || teacherUser.email.trim().isEmpty()) {
+            return;
+        }
+
+        String paidDateStr = salary.paidDate != null 
+            ? salary.paidDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+            : java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+        String subject = "[Trung tâm Anh ngữ] Thông báo thanh toán lương tháng " + salary.month + "/" + salary.year;
+
+        String noteDisplay = salary.note != null && !salary.note.trim().isEmpty() ? salary.note : "Không có";
+
+        String content = """
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #dddddd; border-radius: 8px;">
+                <h3 style="color: #1e3a8a; text-align: center;">THÔNG BÁO THANH TOÁN LƯƠNG</h3>
+                <p>Xin chào thầy/cô <strong>%s</strong>,</p>
+                <p>Trung tâm Anh ngữ xin thông báo lương tháng <strong>%d/%d</strong> của thầy/cô đã được thanh toán thành công. Chi tiết như sau:</p>
+                
+                <table style="width: 100%%; border-collapse: collapse; margin: 15px 0;">
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dddddd; width: 35%%; font-weight: bold;">Họ và tên:</td>
+                        <td style="padding: 8px; border: 1px solid #dddddd;">%s</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold;">Kỳ lĩnh lương:</td>
+                        <td style="padding: 8px; border: 1px solid #dddddd;">Tháng %d/%d</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold;">Số buổi dạy:</td>
+                        <td style="padding: 8px; border: 1px solid #dddddd;">%d buổi</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold;">Tổng số tiền nhận:</td>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold; color: #1e3a8a;">%,.0f VND</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold;">Ngày thanh toán:</td>
+                        <td style="padding: 8px; border: 1px solid #dddddd;">%s</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold;">Ghi chú:</td>
+                        <td style="padding: 8px; border: 1px solid #dddddd;">%s</td>
+                    </tr>
+                </table>
+                
+                <p>Nếu có bất kỳ thắc mắc nào về bảng lương này, thầy/cô vui lòng liên hệ trực tiếp với bộ phận kế toán của trung tâm.</p>
+                <p>Trân trọng cảm ơn những đóng góp của thầy/cô đối với trung tâm!</p>
+                <hr style="border: none; border-top: 1px solid #eeeeee; margin-top: 20px;" />
+                <p style="font-size: 12px; color: #888888; text-align: center;">Đây là email tự động từ hệ thống, vui lòng không phản hồi thư này.</p>
+            </div>
+            """.formatted(
+                teacherUser.fullName,
+                salary.month,
+                salary.year,
+                teacherUser.fullName,
+                salary.month,
+                salary.year,
+                salary.totalSessions,
+                salary.amount.doubleValue(),
+                paidDateStr,
+                noteDisplay
+            );
+
+        emailService.sendEmail(teacherUser.email, subject, content);
     }
 }

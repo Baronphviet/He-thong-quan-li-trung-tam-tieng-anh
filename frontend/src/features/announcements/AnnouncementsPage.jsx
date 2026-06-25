@@ -23,6 +23,8 @@ export default function AnnouncementsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(null);
   const { addNotification } = useNotification();
 
   useEffect(() => {
@@ -114,8 +116,36 @@ export default function AnnouncementsPage() {
 
   const handleDeactivate = async (id) => {
     try {
-      await announcementService.delete(id);
+      await announcementService.deactivate(id);
       addNotification("Đã tắt thông báo", "success");
+      await loadData();
+    } catch (err) {
+      addNotification(err.message, "error");
+    }
+  };
+
+  const handleActivate = async (id) => {
+    try {
+      await announcementService.activate(id);
+      addNotification("Đã bật thông báo", "success");
+      await loadData();
+    } catch (err) {
+      addNotification(err.message, "error");
+    }
+  };
+
+  const handleDelete = (item) => {
+    setPendingDelete(item);
+    setConfirmDeleteOpen(true);
+  };
+
+  const executeDelete = async () => {
+    if (!pendingDelete) return;
+    try {
+      await announcementService.delete(pendingDelete.id);
+      addNotification("Xóa thông báo thành công", "success");
+      setConfirmDeleteOpen(false);
+      setPendingDelete(null);
       await loadData();
     } catch (err) {
       addNotification(err.message, "error");
@@ -137,9 +167,12 @@ export default function AnnouncementsPage() {
       render: (_, row) => (
         <div className="table-actions" style={{ display: 'flex', gap: '6px' }}>
           <Button variant="secondary" size="sm" type="button" onClick={() => openEdit(row)}>Sửa</Button>
-          {row.active && (
+          {row.active ? (
             <Button variant="secondary" size="sm" type="button" onClick={() => handleDeactivate(row.id)}>Tắt</Button>
+          ) : (
+            <Button variant="secondary" size="sm" type="button" onClick={() => handleActivate(row.id)}>Bật</Button>
           )}
+          <Button variant="danger" size="sm" type="button" onClick={() => handleDelete(row)}>Xóa</Button>
         </div>
       )
     }
@@ -187,6 +220,33 @@ export default function AnnouncementsPage() {
             <span>Đang hiển thị</span>
           </label>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={confirmDeleteOpen}
+        onClose={() => { setConfirmDeleteOpen(false); setPendingDelete(null); }}
+        title="Xác nhận xóa quảng cáo"
+        size="md"
+        footer={(
+          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", width: "100%" }}>
+            <Button variant="secondary" type="button" onClick={() => { setConfirmDeleteOpen(false); setPendingDelete(null); }}>Hủy</Button>
+            <Button
+              type="button"
+              onClick={executeDelete}
+              style={{ backgroundColor: "#dc3545", color: "#fff", borderColor: "#dc3545" }}
+            >
+              Xác nhận xóa
+            </Button>
+          </div>
+        )}
+      >
+        <div style={{ padding: "8px 0", fontSize: "0.95rem", lineHeight: "1.5", color: "#333" }}>
+          Bạn có chắc chắn muốn xóa vĩnh viễn quảng cáo/thông báo <strong>{pendingDelete?.title}</strong> không?
+          <br />
+          <span style={{ color: "#d9534f", fontSize: "0.85rem", display: "block", marginTop: "8px" }}>
+            * Lưu ý: Thao tác này sẽ xóa vĩnh viễn dữ liệu khỏi hệ thống và không thể hoàn tác.
+          </span>
+        </div>
       </Modal>
     </main>
   );

@@ -15,6 +15,8 @@ import com.englishcenter.repository.StudentByClassViewRepository;
 import com.englishcenter.repository.StudentChangeMonthlyViewRepository;
 import com.englishcenter.repository.TeacherSalaryRepository;
 import com.englishcenter.repository.UserRepository;
+import com.englishcenter.repository.StudentParentRepository;
+import com.englishcenter.service.EmailService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,6 +39,8 @@ public class FinanceService {
     private final AnnouncementRepository announcements;
     private final TeacherSalaryRepository teacherSalaries;
     private final ClassService classService;
+    private final StudentParentRepository studentParents;
+    private final EmailService emailService;
 
     public FinanceService(
             MonthlyFeeRepository monthlyFees,
@@ -49,7 +53,9 @@ public class FinanceService {
             StudentByClassViewRepository studentsByClass,
             AnnouncementRepository announcements,
             TeacherSalaryRepository teacherSalaries,
-            ClassService classService
+            ClassService classService,
+            StudentParentRepository studentParents,
+            EmailService emailService
     ) {
         this.monthlyFees = monthlyFees;
         this.payments = payments;
@@ -62,6 +68,8 @@ public class FinanceService {
         this.announcements = announcements;
         this.teacherSalaries = teacherSalaries;
         this.classService = classService;
+        this.studentParents = studentParents;
+        this.emailService = emailService;
     }
 
     public record MonthlyFeeRequest(
@@ -204,6 +212,13 @@ public class FinanceService {
         Payment saved = payments.save(payment);
 
         refreshFeeStatus(fee);
+
+        try {
+            sendPaymentConfirmationEmail(saved, fee);
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi kích hoạt gửi email học phí: " + e.getMessage());
+        }
+
         return paymentMap(saved);
     }
 
@@ -307,5 +322,128 @@ public class FinanceService {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private void sendPaymentConfirmationEmail(Payment payment, MonthlyFee fee) {
+        Enrollment enrollment = enrollments.findById(fee.enrollmentId).orElse(null);
+        if (enrollment == null) {
+            return;
+        }
+
+        com.englishcenter.entity.UserAccount student = users.findById(enrollment.studentId).orElse(null);
+        if (student == null) {
+            return;
+        }
+
+        ClassEntity classEntity = classes.findById(enrollment.classId).orElse(null);
+        String className = classEntity != null ? classEntity.className : "Không rõ";
+
+        java.util.List<String> recipients = new java.util.ArrayList<>();
+        if (student.email != null && !student.email.trim().isEmpty()) {
+            recipients.add(student.email.trim());
+        }
+
+        List<com.englishcenter.entity.StudentParent> links = studentParents.findByIdStudentId(student.id);
+        for (com.englishcenter.entity.StudentParent link : links) {
+            users.findById(link.id.parentId).ifPresent(parent -> {
+                if (parent.email != null && !parent.email.trim().isEmpty()) {
+                    recipients.add(parent.email.trim());
+                }
+            });
+        }
+
+        if (recipients.isEmpty()) {
+            return;
+        }
+
+        String paymentMethodDesc = switch (payment.method) {
+            case "CASH" -> "Tiền mặt";
+            case "TRANSFER" -> "Chuyển khoản";
+            default -> payment.method;
+        };
+
+        String feeStatusDesc = switch (fee.status) {
+            case "PAID" -> "Đã hoàn thành";
+            case "PARTIAL" -> "Thanh toán một phần";
+            case "UNPAID" -> "Chưa thanh toán";
+            default -> fee.status;
+        };
+
+        String statusColor = switch (fee.status) {
+            case "PAID" -> "#16a34a";
+            case "PARTIAL" -> "#ea580c";
+            default -> "#dc2626";
+        };
+
+        BigDecimal paid = nullToZero(payments.sumPaidByFeeId(fee.id));
+        BigDecimal remaining = fee.finalAmount.subtract(paid);
+        if (remaining.compareTo(BigDecimal.ZERO) < 0) {
+            remaining = BigDecimal.ZERO;
+        }
+
+        String paymentTimeStr = payment.paymentDate != null 
+            ? payment.paymentDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+            : java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+
+        String subject = "[Trung tâm Anh ngữ] Xác nhận thanh toán học phí thành công";
+
+        String content = """
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #dddddd; border-radius: 8px;">
+                <h3 style="color: #16a34a; text-align: center;">XÁC NHẬN THANH TOÁN HỌC PHÍ</h3>
+                <p>Xin chào quý phụ huynh và học viên,</p>
+                <p>Hệ thống ghi nhận giao dịch đóng học phí thành công từ học viên <strong>%s</strong> như sau:</p>
+                
+                <table style="width: 100%%; border-collapse: collapse; margin: 15px 0;">
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dddddd; width: 35%%; font-weight: bold;">Học viên:</td>
+                        <td style="padding: 8px; border: 1px solid #dddddd;">%s</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold;">Lớp học:</td>
+                        <td style="padding: 8px; border: 1px solid #dddddd;">%s</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold;">Số tiền thanh toán:</td>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold; color: #16a34a;">%,.0f VND</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold;">Thời gian đóng:</td>
+                        <td style="padding: 8px; border: 1px solid #dddddd;">%s</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold;">Hình thức:</td>
+                        <td style="padding: 8px; border: 1px solid #dddddd;">%s</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold;">Số tiền còn lại cần đóng:</td>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold; color: #dc2626;">%,.0f VND</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold;">Trạng thái học phí tháng %d/%d:</td>
+                        <td style="padding: 8px; border: 1px solid #dddddd; font-weight: bold; color: %s;">%s</td>
+                    </tr>
+                </table>
+                
+                <p>Cảm ơn quý phụ huynh và học viên đã đồng hành cùng trung tâm.</p>
+                <hr style="border: none; border-top: 1px solid #eeeeee; margin-top: 20px;" />
+                <p style="font-size: 12px; color: #888888; text-align: center;">Đây là email tự động từ hệ thống, vui lòng không phản hồi thư này.</p>
+            </div>
+            """.formatted(
+                student.fullName,
+                student.fullName,
+                className,
+                payment.amount.doubleValue(),
+                paymentTimeStr,
+                paymentMethodDesc,
+                remaining.doubleValue(),
+                fee.month,
+                fee.year,
+                statusColor,
+                feeStatusDesc
+            );
+
+        for (String email : recipients) {
+            emailService.sendEmail(email, subject, content);
+        }
     }
 }

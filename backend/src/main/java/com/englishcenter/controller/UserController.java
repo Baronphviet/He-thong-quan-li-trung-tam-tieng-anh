@@ -101,6 +101,12 @@ public class UserController {
         service.linkParent(request);
     }
 
+    @PostMapping("/parents/unlink-student")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unlinkParent(@RequestBody LinkParentRequest request) {
+        service.unlinkParent(request);
+    }
+
     // ── Users (chung) ────────────────────────────────────
     @GetMapping("/users/{id}/profile")
     public Map<String, Object> profile(@PathVariable Long id) {

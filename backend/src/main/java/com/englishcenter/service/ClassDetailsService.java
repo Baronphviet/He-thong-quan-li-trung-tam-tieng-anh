@@ -46,7 +46,9 @@ public class ClassDetailsService {
 
     public Map<String, Object> getClassDetails(Long classId) {
         Map<String, Object> details = new LinkedHashMap<>(classService.getClass(classId));
-        List<StudentByClassView> classStudents = studentsView.findByClassIdOrderByFullNameAsc(classId);
+        List<StudentByClassView> classStudents = studentsView.findByClassIdOrderByFullNameAsc(classId).stream()
+                .filter(s -> "ACTIVE".equals(s.status))
+                .toList();
         List<Long> sessionIds = sessions.findByClassIdOrderBySessionDateDescSessionNumberDesc(classId)
                 .stream().map(s -> s.id).toList();
 

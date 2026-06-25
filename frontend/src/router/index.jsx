@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+// Trigger compilation check after ParentPaymentPage creation
 import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/LoginPage";
 import ProfilePage from "../pages/ProfilePage";
@@ -19,13 +20,14 @@ import TeacherAttendancePage from "../pages/TeacherAttendancePage";
 import StudentDashboardPage from "../pages/StudentDashboardPage";
 import ParentDashboardPage from "../pages/ParentDashboardPage";
 import AttendanceHistoryPage from "../pages/AttendanceHistoryPage";
+import ParentPaymentPage from "../pages/ParentPaymentPage";
 import { DashboardLayout } from "../components/layout";
 import { useAuth } from "../store";
 import { getRoleHome } from "../utils/auth";
 
 function RequireAuth({ roles, children }) {
-  const { isAuthenticated, role } = useAuth();
   const location = useLocation();
+  const { isAuthenticated, role } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location }} />;
@@ -71,6 +73,7 @@ export default function AppRouter() {
       <Route path="/student/attendance" element={<RequireAuth roles={["STUDENT"]}><DashboardLayout><AttendanceHistoryPage /></DashboardLayout></RequireAuth>} />
       <Route path="/parent" element={<RequireAuth roles={["PARENT"]}><DashboardLayout><ParentDashboardPage /></DashboardLayout></RequireAuth>} />
       <Route path="/parent/attendance" element={<RequireAuth roles={["PARENT"]}><DashboardLayout><AttendanceHistoryPage /></DashboardLayout></RequireAuth>} />
+      <Route path="/parent/payment" element={<RequireAuth roles={["PARENT"]}><DashboardLayout><ParentPaymentPage /></DashboardLayout></RequireAuth>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

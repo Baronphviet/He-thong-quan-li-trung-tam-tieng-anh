@@ -51,7 +51,19 @@ public class AnnouncementController {
 
     @DeleteMapping("/announcements/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
+    }
+
+    @PostMapping("/announcements/{id}/deactivate")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deactivate(@PathVariable Long id) {
         service.deactivate(id);
+    }
+
+    @PostMapping("/announcements/{id}/activate")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void activate(@PathVariable Long id) {
+        service.activate(id);
     }
 }
